@@ -1,3 +1,0 @@
-D:/C++/Browser/src/build/CMakeFiles/my_app.dir
-D:/C++/Browser/src/build/CMakeFiles/ALL_BUILD.dir
-D:/C++/Browser/src/build/CMakeFiles/ZERO_CHECK.dir

@@ -1,6 +1,38 @@
+
 {
-    "cmake.sourceDirectory": "D:/C++/Browser/src",
     "files.associations": {
-        "string": "cpp"
+        "iostream": "cpp",
+        "string": "cpp",
+        "cstdlib": "cpp"
+    },
+    "C_Cpp.default": {
+        "compilerPath": "/usr/bin/clang++",
+        "includePath": [
+            "/usr/include",
+            "/usr/local/include",
+            "/usr/include/x86_64-linux-gnu",
+            "${workspaceFolder}/**"
+        ],
+        "defines": [
+            "_DEBUG",
+            "UNIX"
+        ],
+        "intelliSenseMode": "linux-clang-x64",
+        "cStandard": "c17",
+        "cppStandard": "c++20"
+    },
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.intelliSenseEngineFallback": "enabled",
+    "C_Cpp.clang_diagnostics": true,
+    "C_Cpp.logging": {
+        "engineLogging": true,
+        "trace.parser": true
+    },
+    "cmake.configureOnOpen": true,
+    "cmake.generator": "Unix Makefiles",
+    "editor.formatOnSave": true,
+    "C_Cpp.errorSquiggles": "enabled",
+    "C_Cpp.warnings": {
+        "enabled": true
     }
 }
