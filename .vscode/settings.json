@@ -1,9 +1,11 @@
 
 {
     "files.associations": {
+        "*.cpp": "cpp",
         "iostream": "cpp",
         "string": "cpp",
-        "cstdlib": "cpp"
+        "cstdlib": "cpp",
+        "ostream": "cpp"
     },
     "C_Cpp.default": {
         "compilerPath": "/usr/bin/clang++",

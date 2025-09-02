@@ -6,11 +6,18 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <libxml/HTMLparser.h>
+#include <libxml/xpath.h>
+
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http; // from <boost/beast/http.hpp>
 namespace net = boost::asio; // from <boost/asio.hpp>
 using tcp = net::ip::tcp; // from <boost/asio/ip/tcp.hpp>
+
+void parseHTML(const std::string& html);
+
+void parse(std::string& page);
 
 // Performs an HTTP GET and prints the response
 int main(int argc, char **argv) {
@@ -60,7 +67,9 @@ int main(int argc, char **argv) {
         http::read(stream, buffer, res);
 
         // Write the message to standard out
-        std::cout << res << std::endl;
+        // std::cout << res << std::endl;
+        std::string response_str = boost::beast::buffers_to_string(res.body().data());
+        parse(response_str);
 
         // Gracefully close the socket
         beast::error_code ec;
@@ -78,4 +87,69 @@ int main(int argc, char **argv) {
         return EXIT_FAILURE;
     }
     return EXIT_SUCCESS;
+}
+
+void parse(std::string& page) {
+    // std::cout << page << std::endl;
+    parseHTML(page);
+}
+
+void parseHTML(const std::string& html) {
+    // Парсим HTML строку
+    htmlDocPtr doc = htmlReadMemory(
+        html.c_str(),        // исходная строка
+        html.length(),       // длина строки
+        nullptr,             // URL (не используется)
+        nullptr,             // кодировка (автоопределение)
+        HTML_PARSE_NOERROR   // опции парсинга
+    );
+
+    if (!doc) {
+        std::cerr << "Ошибка при парсинге HTML" << std::endl;
+        return;
+    }
+
+    // Создаем контекст XPath
+    xmlXPathContextPtr xpathCtx = xmlXPathNewContext(doc);
+    if (!xpathCtx) {
+        xmlFreeDoc(doc);
+        std::cerr << "Ошибка создания контекста XPath" << std::endl;
+        return;
+    }
+
+    try {
+        // Пример использования XPath для поиска элементов
+        // Находим все теги <div>
+        const xmlChar* xpathExpr = (const xmlChar*)"//div";
+        xmlXPathObjectPtr result = xmlXPathEvalExpression(xpathExpr, xpathCtx);
+
+        if (result && result->nodesetval) {
+            // Перебираем найденные узлы
+            for (int i = 0; i < result->nodesetval->nodeNr; i++) {
+                xmlNodePtr node = result->nodesetval->nodeTab[i];
+
+                // Получаем текст узла
+                xmlChar* content = xmlNodeGetContent(node);
+                if (content) {
+                    std::cout << "Текст узла: " << content << std::endl;
+                    xmlFree(content);
+                }
+
+                // Пример получения атрибута
+                xmlChar* attrValue = xmlGetProp(node, (const xmlChar*)"class");
+                if (attrValue) {
+                    std::cout << "Атрибут class: " << attrValue << std::endl;
+                    xmlFree(attrValue);
+                }
+            }
+        }
+        xmlXPathFreeObject(result);
+
+    } catch (const std::exception& e) {
+        std::cerr << "Ошибка: " << e.what() << std::endl;
+    }
+
+    // Освобождаем ресурсы
+    xmlXPathFreeContext(xpathCtx);
+    xmlFreeDoc(doc);
 }
