@@ -36,5 +36,6 @@
     "C_Cpp.errorSquiggles": "enabled",
     "C_Cpp.warnings": {
         "enabled": true
-    }
+    },
+    "cmake.sourceDirectory": "/home/sokolovna/Netology/Browser/src"
 }
