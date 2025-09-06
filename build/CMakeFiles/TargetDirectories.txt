@@ -1,3 +1,0 @@
-/home/sokolovna/Netology/Browser/build/CMakeFiles/my_app.dir
-/home/sokolovna/Netology/Browser/build/CMakeFiles/edit_cache.dir
-/home/sokolovna/Netology/Browser/build/CMakeFiles/rebuild_cache.dir
