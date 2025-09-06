@@ -14,5 +14,8 @@ text() {
 void Indexer::setPage(const std::string &htmlPage) {
     parser.parse(htmlPage);
     text = parser.getText();
+}
 
+std::string Indexer::getText() {
+    return text;
 }
