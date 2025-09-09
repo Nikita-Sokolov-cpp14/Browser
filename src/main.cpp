@@ -21,6 +21,11 @@ int main(int argc, char **argv) {
     Indexer indexer;
     indexer.setPage(spider.getResponseStr());
 
+    for (const auto& val : indexer.getStorage()) {
+        std::cout << val.first << " " << val.second << std::endl;
+    }
+
     // Проверка резултатов. Должа вывестись строка без HTML тегов, без знаков препинания и в нижнем регистре
-    std::cout << indexer.getText() << std::endl;
+    // std::cout << indexer.getText() << std::endl;
+
 }

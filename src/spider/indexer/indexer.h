@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <string>
+#include <map>
 #include "../parser/parser.h"
 
 /**
@@ -8,6 +9,8 @@
 */
 class Indexer {
 public:
+    typedef std::map<std::string, int> Storage;
+
     Indexer();
 
     /**
@@ -29,8 +32,14 @@ public:
     */
     std::string getText();
 
+    Storage getStorage() const;
+
 private:
     Parser parser; //!< Парсер HTML страницы.
 
+    Storage storage;
+
     std::string text; //!< HTML станица в виде строки без тегов и знаков препинания, в нижнем регистре.
+
+    void calcCountWords();
 };
