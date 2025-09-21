@@ -5,7 +5,7 @@
 
 #include "spider/spider.h"
 #include "spider/indexer/indexer.h"
-#include "spider/database_manager/database_manager.h"
+#include "database_manager/database_manager.h"
 
 //! Тестовые данные для скачивания страницы. Это загружаемый аналог стартовой страницы.
 namespace {

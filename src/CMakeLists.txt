@@ -1,28 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
-project(BoostExample)
+project(browser)
 
-find_package(LibXml2 REQUIRED)
-find_package(Boost REQUIRED COMPONENTS locale)
-find_package(PostgreSQL REQUIRED)
+add_subdirectory(database_manager)
+add_subdirectory(spider)
 
-include_directories(${PostgreSQL_INCLUDE_DIR})
+add_executable(${PROJECT_NAME} main.cpp)
 
-add_executable(my_app main.cpp
-                        spider/spider.cpp
-                        spider/indexer/indexer.cpp
-                        spider/parser/parser.cpp
-                        spider/database_manager/database_manager.cpp)
-
-target_include_directories(my_app
-    PRIVATE
-        ${LIBXML2_INCLUDE_DIRS}
-        ${Boost_INCLUDE_DIRS}
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${CMAKE_SOURCE_DIR}/
 )
 
-target_link_libraries(my_app
-    PRIVATE
-        ${LIBXML2_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${PostgreSQL_LIBRARIES}
-        pqxx
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    database_manager
+    spider
 )
