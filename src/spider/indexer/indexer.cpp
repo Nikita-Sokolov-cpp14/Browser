@@ -1,39 +1,45 @@
 #include "indexer.h"
 
+#include <pqxx/pqxx>
+
 Indexer::Indexer() :
-parser(),
-text() {
+parser_(),
+text_() {
 }
 
-Indexer::Indexer(const std::string &htmlPage) :
-parser(),
-text() {
-    setPage(htmlPage);
-}
+// Indexer::Indexer(const std::string &htmlPage, const std::string &host) :
+// parser_(),
+// storage_(),
+// host_(host),
+// text_() {
+//     setPage(htmlPage, host_);
+// }
 
-void Indexer::setPage(const std::string &htmlPage) {
-    parser.parse(htmlPage);
-    text = parser.getText();
+void Indexer::setPage(const std::string &htmlPage, const std::string &host,
+        DatabaseManager &dbManager) {
+    parser_.parse(htmlPage);
+    text_ = parser_.getText();
     calcCountWords();
+    dbManager.writeData(host, storage_);
 }
 
 std::string Indexer::getText() {
-    return text;
+    return text_;
 }
 
 Indexer::Storage Indexer::getStorage() const {
-    return storage;
+    return storage_;
 }
 
 void Indexer::calcCountWords() {
     std::string word;
 
-    for (int i = 0; i < text.length(); ++i) {
-        if (text[i] == ' ' && i != text.length() - 1) {
+    for (int i = 0; i < text_.length(); ++i) {
+        if (text_[i] == ' ' && i != text_.length() - 1) {
             ++i;
             word = "";
-            while (text[i] != ' ' && i < text.length()) {
-                word += text[i];
+            while (text_[i] != ' ' && i < text_.length()) {
+                word += text_[i];
                 ++i;
             }
 
@@ -41,7 +47,7 @@ void Indexer::calcCountWords() {
                 continue;
             }
 
-            storage[word]++;
+            storage_[word]++;
         }
     }
 }

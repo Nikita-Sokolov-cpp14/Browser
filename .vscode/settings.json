@@ -69,7 +69,10 @@
         "cinttypes": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "pqxx": "cpp",
+        "binarystring": "cpp",
+        "transactor": "cpp"
     },
     "C_Cpp.default": {
         "compilerPath": "/usr/bin/clang++",

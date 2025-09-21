@@ -241,6 +241,24 @@ PKG_CONFIG_ARGN:STRING=
 //pkg-config executable
 PKG_CONFIG_EXECUTABLE:FILEPATH=/usr/bin/pkg-config
 
+//The Set the PostgreSQL_INCLUDE_DIR cmake cache entry to the top-level
+// directory containing the PostgreSQL include directories. E.g
+// /usr/local/include/PostgreSQL/8.4 or C:/Program Files/PostgreSQL/8.4/include
+PostgreSQL_INCLUDE_DIR:PATH=/usr/include/postgresql
+
+//The Set the PostgreSQL_LIBRARY_DIR cmake cache entry to the top-level
+// directory containing the PostgreSQL libraries.
+PostgreSQL_LIBRARY_DEBUG:FILEPATH=PostgreSQL_LIBRARY_DEBUG-NOTFOUND
+
+//The Set the PostgreSQL_LIBRARY_DIR cmake cache entry to the top-level
+// directory containing the PostgreSQL libraries.
+PostgreSQL_LIBRARY_RELEASE:FILEPATH=/usr/lib/x86_64-linux-gnu/libpq.so
+
+//The Set the PostgreSQL_INCLUDE_DIR cmake cache entry to the top-level
+// directory containing the PostgreSQL include directories. E.g
+// /usr/local/include/PostgreSQL/8.4 or C:/Program Files/PostgreSQL/8.4/include
+PostgreSQL_TYPE_INCLUDE_DIR:PATH=PostgreSQL_TYPE_INCLUDE_DIR-NOTFOUND
+
 //The directory containing a CMake configuration file for boost_atomic.
 boost_atomic_DIR:PATH=/usr/lib/x86_64-linux-gnu/cmake/boost_atomic-1.74.0
 
@@ -422,6 +440,8 @@ CMAKE_VERBOSE_MAKEFILE-ADVANCED:INTERNAL=1
 FIND_PACKAGE_MESSAGE_DETAILS_Boost:INTERNAL=[/usr/lib/x86_64-linux-gnu/cmake/Boost-1.74.0/BoostConfig.cmake][cfound components: locale ][v1.74.0()]
 //Details about finding LibXml2
 FIND_PACKAGE_MESSAGE_DETAILS_LibXml2:INTERNAL=[/usr/lib/x86_64-linux-gnu/libxml2.so][/usr/include/libxml2][v2.9.13()]
+//Details about finding PostgreSQL
+FIND_PACKAGE_MESSAGE_DETAILS_PostgreSQL:INTERNAL=[/usr/lib/x86_64-linux-gnu/libpq.so][/usr/include/postgresql][c ][v14.19()]
 //ADVANCED property for variable: LIBXML2_INCLUDE_DIR
 LIBXML2_INCLUDE_DIR-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: LIBXML2_LIBRARY
@@ -467,6 +487,14 @@ PC_LIBXML_libxml-2.0_VERSION:INTERNAL=
 PKG_CONFIG_ARGN-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: PKG_CONFIG_EXECUTABLE
 PKG_CONFIG_EXECUTABLE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PostgreSQL_INCLUDE_DIR
+PostgreSQL_INCLUDE_DIR-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PostgreSQL_LIBRARY_DEBUG
+PostgreSQL_LIBRARY_DEBUG-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PostgreSQL_LIBRARY_RELEASE
+PostgreSQL_LIBRARY_RELEASE-ADVANCED:INTERNAL=1
+//ADVANCED property for variable: PostgreSQL_TYPE_INCLUDE_DIR
+PostgreSQL_TYPE_INCLUDE_DIR-ADVANCED:INTERNAL=1
 __pkg_config_arguments_PC_LIBXML:INTERNAL=QUIET;libxml-2.0
 __pkg_config_checked_PC_LIBXML:INTERNAL=1
 //ADVANCED property for variable: boost_atomic_DIR
