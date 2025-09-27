@@ -17,8 +17,8 @@ const std::string target = "/";
 } // namespace
 
 int main(int argc, char **argv) {
-    Spider spider(host, port, target);
-    spider.loadPage();
+    Spider spider;
+    spider.loadPage(host, port, target);
 
     //! TODO: Индексатор пока отдельно, но в будущем будет внутри Spider.
     Indexer indexer;

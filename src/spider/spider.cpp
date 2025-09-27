@@ -10,22 +10,10 @@ namespace http = beast::http; // from <boost/beast/http.hpp>
 namespace net = boost::asio; // from <boost/asio.hpp>
 using tcp = net::ip::tcp; // from <boost/asio/ip/tcp.hpp>
 
-Spider::Spider() :
-host(),
-port(),
-target(),
-responseStr() {
-}
-
-Spider::Spider(const std::string &host, const std::string &port, const std::string &target) :
-host(host),
-port(port),
-target(target),
-responseStr() {
-}
-
-void Spider::loadPage() {
+std::string getPage(const std::string &host, const std::string &port, const std::string &target) {
     try {
+        std::string responseStr;
+
         // Check command line arguments.
         if (host == "" || port == "" || target == "") {
             std::cerr
@@ -33,7 +21,7 @@ void Spider::loadPage() {
                     << "Example:\n"
                     << "    http-client-sync www.example.com 80 /\n"
                     << "    http-client-sync www.example.com 80 / 1.0\n";
-            return;
+            return "";
         }
         // int version = argc == 5 && !std::strcmp("1.0", argv[4]) ? 10 : 11;
         //! TODO: Исправить
@@ -80,15 +68,35 @@ void Spider::loadPage() {
         //
         if (ec && ec != beast::errc::not_connected)
             throw beast::system_error {ec};
-
+        return responseStr;
         // If we get here then the connection is closed gracefully
     } catch (std::exception const &e) {
         std::cerr << "Error: " << e.what() << std::endl;
-        return;
+        return "";
     }
-    return;
+    return "";
 }
 
-std::string& Spider::getResponseStr() {
-    return responseStr;
+Spider::Spider() :
+responseStr_() {
+}
+
+// Spider::Spider(const std::string &host, const std::string &port, const std::string &target) :
+// host(host),
+// port(port),
+// target(target),
+// responseStr_() {
+// }
+
+void Spider::process(const std::string &startHost, const std::string &startPort,
+        const std::string &startTarget) {
+
+}
+
+void Spider::loadPage(const std::string &host, const std::string &port, const std::string &target) {
+    responseStr_ = getPage(host, port, target);
+}
+
+std::string &Spider::getResponseStr() {
+    return responseStr_;
 }

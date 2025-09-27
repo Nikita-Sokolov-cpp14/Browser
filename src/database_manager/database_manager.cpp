@@ -17,6 +17,52 @@ DatabaseManager::~DatabaseManager() {
     }
 }
 
+void DatabaseManager::createTables() {
+    try {
+        pqxx::work txn(connection_);
+
+        // Создание таблицы pages
+        txn.exec(R"(
+            CREATE TABLE IF NOT EXISTS pages (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(255) NOT NULL
+            )
+        )");
+        std::cout << "DatabaseManager::createTables: Table 'pages' created" << std::endl;
+
+        // Создание таблицы words
+        txn.exec(R"(
+            CREATE TABLE IF NOT EXISTS words (
+                id_word SERIAL PRIMARY KEY,
+                word VARCHAR(50) NOT NULL,
+                word_count INT NOT NULL
+            )
+        )");
+        std::cout << "DatabaseManager::createTables: Table 'words' created" << std::endl;
+
+        // Создание связующей таблицы page_words
+        txn.exec(R"(
+            CREATE TABLE IF NOT EXISTS page_words (
+                id SERIAL PRIMARY KEY,
+                page_id INT NOT NULL,
+                word_id INT NOT NULL,
+
+                FOREIGN KEY (page_id) REFERENCES pages(id),
+                FOREIGN KEY (word_id) REFERENCES words(id_word),
+                UNIQUE (page_id, word_id)
+            )
+        )");
+        std::cout << "DatabaseManager::createTables: Table 'page_words' created" << std::endl;
+
+        // Коммитим транзакцию
+        txn.commit();
+        std::cout << "DatabaseManager::createTables: All tables created" << std::endl;
+
+    } catch (const std::exception &e) {
+        std::cerr << "DatabaseManager::createTables: Error create tables " << e.what() << std::endl;
+    }
+}
+
 void DatabaseManager::clearDatabase() {
     try {
         pqxx::work tx(connection_);

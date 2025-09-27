@@ -3,6 +3,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <queue>
+
+std::string getPage(const std::string &host, const std::string &port, const std::string &target);
 
 /**
 * @brief Класс программы «Паук».
@@ -13,18 +16,21 @@ class Spider {
 public:
     Spider();
 
+    void process(const std::string &startHost, const std::string &startPort,
+            const std::string &startTarget);
+
     /**
     * @brief Конструктор.
     * @param host Хост.
     * @param port Порт.
     * @param target Таргет.
     */
-    Spider(const std::string &host, const std::string &port, const std::string &target);
+    // Spider(const std::string &host, const std::string &port, const std::string &target);
 
     /**
     * @brief Скачать HMTL страницу.
     */
-    void loadPage();
+    void loadPage(const std::string &host, const std::string &port, const std::string &target);
 
     /**
     * @brief Получить HTML страницу в виде строки.
@@ -33,8 +39,6 @@ public:
     std::string &getResponseStr();
 
 private:
-    std::string host;
-    std::string port;
-    std::string target;
-    std::string responseStr; //!< Строка с ответом на запрос.
+    std::string responseStr_; //!< Строка с ответом на запрос.
+    std::queue<std::string> queueReferences_;
 };

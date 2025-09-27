@@ -10,6 +10,8 @@ public:
     DatabaseManager(const std::string &connectionString);
     ~DatabaseManager();
 
+    void createTables();
+
     void clearDatabase();
 
     void writeData(const std::string &pageTitle, const std::map<std::string, int> &storage);
