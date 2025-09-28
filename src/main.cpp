@@ -12,13 +12,13 @@ namespace {
 
 // http://www.google.ru/history/optout?hl=ru
 
-// const std::string host = "www.google.ru";
-// const std::string port = "80";
-// const std::string target = "/history/optout?hl=ru";
-
-const std::string host = "www.google.com";
+const std::string host = "www.google.ru";
 const std::string port = "80";
-const std::string target = "/";
+const std::string target = "/history/optout?hl=ru";
+
+// const std::string host = "www.google.com";
+// const std::string port = "80";
+// const std::string target = "/";
 
 } // namespace
 

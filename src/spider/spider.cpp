@@ -22,76 +22,6 @@ const int maxRecursiveCount = 2;
 
 } // namespace
 
-std::string getPage(const RequestConfig &startRequestConfig) {
-    try {
-        std::string responseStr;
-
-        // std::cout << "--- target =" << startRequestConfig.target << std::endl;
-
-        // Check command line arguments.
-        if (startRequestConfig.host == "" || startRequestConfig.port == "" ||
-                startRequestConfig.target == "") {
-            std::cerr
-                    << "Usage: http-client-sync <host> <port> <target> [<HTTP version: 1.0 or 1.1(default)>]\n"
-                    << "Example:\n"
-                    << "    http-client-sync www.example.com 80 /\n"
-                    << "    http-client-sync www.example.com 80 / 1.0\n";
-            return "";
-        }
-        // int version = argc == 5 && !std::strcmp("1.0", argv[4]) ? 10 : 11;
-        //! TODO: Исправить
-        int version = 11;
-
-        // The io_context is required for all I/O
-        net::io_context ioc;
-
-        // These objects perform our I/O
-        tcp::resolver resolver(ioc);
-        beast::tcp_stream stream(ioc);
-
-        // Look up the domain name
-        auto const results = resolver.resolve(startRequestConfig.host, startRequestConfig.port);
-
-        // Make the connection on the IP address we get from a lookup
-        stream.connect(results);
-
-        // Set up an HTTP GET request message
-        http::request<http::string_body> req {http::verb::get, startRequestConfig.target, version};
-        req.set(http::field::host, startRequestConfig.host);
-        req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
-
-        // Send the HTTP request to the remote host
-        http::write(stream, req);
-
-        // This buffer is used for reading and must be persisted
-        beast::flat_buffer buffer;
-
-        // Declare a container to hold the response
-        http::response<http::dynamic_body> res;
-
-        // Receive the HTTP response
-        http::read(stream, buffer, res);
-
-        responseStr = boost::beast::buffers_to_string(res.body().data());
-
-        // Gracefully close the socket
-        beast::error_code ec;
-        stream.socket().shutdown(tcp::socket::shutdown_both, ec);
-
-        // not_connected happens sometimes
-        // so don't bother reporting it.
-        //
-        if (ec && ec != beast::errc::not_connected)
-            throw beast::system_error {ec};
-        return responseStr;
-        // If we get here then the connection is closed gracefully
-    } catch (std::exception const &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-        return "";
-    }
-    return "";
-}
-
 RequestConfig parseUrl(const std::string &url) {
     RequestConfig config;
     std::cout << url << std::endl;
@@ -140,6 +70,68 @@ RequestConfig parseUrl(const std::string &url) {
     // std::cout << config.port << std::endl;
     // std::cout << config.target << std::endl;
     return config;
+}
+
+SimpleHttpClient::SimpleHttpClient() :
+resolver_(ioc_),
+stream_(ioc_) {
+}
+
+std::string SimpleHttpClient::get(const RequestConfig &reqConfig, int max_redirects = 5) {
+    std::cout << "SimpleHttpClient::get " << reqConfig.host << reqConfig.port << reqConfig.target << std::endl;
+
+    if (max_redirects <= 0) {
+        throw std::runtime_error("Too many redirects");
+    }
+
+    // Разрешение домена
+    auto const results = resolver_.resolve(reqConfig.host, reqConfig.port);
+    stream_.connect(results);
+
+    // Создание запроса
+    http::request<http::string_body> req {http::verb::get, reqConfig.target, 11};
+    req.set(http::field::host, reqConfig.host);
+    req.set(http::field::user_agent, BOOST_BEAST_VERSION_STRING);
+    req.set(http::field::accept, "*/*");
+
+    // Отправка запроса
+    http::write(stream_, req);
+
+    // Получение ответа
+    beast::flat_buffer buffer;
+    http::response<http::dynamic_body> res;
+    http::read(stream_, buffer, res);
+
+    // Обработка редиректов
+    if (is_redirect(res.result()) && max_redirects > 0) {
+        auto location = res.find(http::field::location);
+        if (location != res.end()) {
+            std::string redirect_url = location->value().to_string();
+            std::cout << "Redirecting to: " << redirect_url << std::endl;
+
+            // Закрываем соединение
+            beast::error_code ec;
+            stream_.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+            // Парсим URL и делаем рекурсивный вызов
+            RequestConfig config = parseUrl(redirect_url);
+            return get(config, max_redirects - 1);
+        }
+    }
+
+    std::string response = beast::buffers_to_string(res.body().data());
+
+    // Закрываем соединение
+    beast::error_code ec;
+    stream_.socket().shutdown(tcp::socket::shutdown_both, ec);
+
+    return response;
+}
+
+bool SimpleHttpClient::is_redirect(http::status status) {
+    return status == http::status::moved_permanently || status == http::status::found ||
+            status == http::status::see_other || status == http::status::temporary_redirect ||
+            status == http::status::permanent_redirect;
 }
 
 void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> &links) {
@@ -209,8 +201,8 @@ void Spider::process() {
         std::cout << "host: " << queueParams.requestConfig.host
                   << " port: " << queueParams.requestConfig.port
                   << " target: " << queueParams.requestConfig.target << std::endl;
-        std::string responseStr = getPage(queueParams.requestConfig);
-        // std::cout << responseStr << std::endl;
+        std::string responseStr = client_.get(queueParams.requestConfig);
+        std::cout << responseStr << std::endl;
         indexer_.setPage(responseStr, queueParams.requestConfig.host, *dbmanager_);
         std::vector<RequestConfig> configs;
         extractAllLinks(responseStr, configs);
