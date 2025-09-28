@@ -43,7 +43,7 @@ void Parser::clearTags() {
     );
 
     if (!doc) {
-        std::cerr << "Ошибка при парсинге HTML" << std::endl;
+        std::cerr << "Parser::clearTags: ERROR: Can't parsing HTML" << std::endl;
         return;
     }
 

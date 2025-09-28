@@ -102,8 +102,8 @@ void DatabaseManager::writeData(const std::string &pageTitle,
                             "ON CONFLICT (page_id, word_id) DO NOTHING",
                     page_id, word_id);
 
-            std::cout << "Добавлено: Page ID: " << page_id << ", Word: " << val.first
-                      << ", Count: " << val.second << ", Word ID: " << word_id << std::endl;
+            // std::cout << "Добавлено: Page ID: " << page_id << ", Word: " << val.first
+            //           << ", Count: " << val.second << ", Word ID: " << word_id << std::endl;
         }
 
         txn.commit();

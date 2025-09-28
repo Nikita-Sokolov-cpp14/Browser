@@ -10,6 +10,12 @@
 //! Тестовые данные для скачивания страницы. Это загружаемый аналог стартовой страницы.
 namespace {
 
+// http://www.google.ru/history/optout?hl=ru
+
+// const std::string host = "www.google.ru";
+// const std::string port = "80";
+// const std::string target = "/history/optout?hl=ru";
+
 const std::string host = "www.google.com";
 const std::string port = "80";
 const std::string target = "/";
@@ -18,28 +24,24 @@ const std::string target = "/";
 
 int main(int argc, char **argv) {
     Spider spider;
-    spider.loadPage(host, port, target);
-
-    //! TODO: Индексатор пока отдельно, но в будущем будет внутри Spider.
-    Indexer indexer;
-
-    // for (const auto &val : indexer.getStorage()) {
-    //     std::cout << val.first << " " << val.second << std::endl;
-    // }
-
     try {
         DatabaseManager dbmanager("host=localhost "
-                           "port=5432 "
-                           "dbname=browser_db "
-                           "user=nekit_pc "
-                           "password=987654321");
+                                  "port=5432 "
+                                  "dbname=browser_db "
+                                  "user=nekit_pc "
+                                  "password=987654321");
 
-        dbmanager.clearDatabase();
-        indexer.setPage(spider.getResponseStr(), host, dbmanager);
-    } catch (const std::exception& e) {
+        RequestConfig reqConfig;
+        reqConfig.host = host;
+        reqConfig.port = port;
+        reqConfig.target = target;
+
+        spider.connectDb(&dbmanager);
+        spider.start(reqConfig);
+    } catch (const std::exception &e) {
         std::cout << e.what() << std::endl;
     }
 
-    // Проверка резултатов. Должа вывестись строка без HTML тегов, без знаков препинания и в нижнем регистре
-    // std::cout << indexer.getText() << std::endl;
+    // const std::string url = "https://accounts.google.com:443/ServiceLogin?hl=ru&passive=true";
+    // parseUrl(url);
 }

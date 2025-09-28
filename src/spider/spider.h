@@ -5,7 +5,28 @@
 #include <string>
 #include <queue>
 
-std::string getPage(const std::string &host, const std::string &port, const std::string &target);
+#include "indexer/indexer.h"
+#include "../database_manager/database_manager.h"
+
+struct RequestConfig {
+    std::string host;
+    std::string port;
+    std::string target;
+};
+
+struct QueueParams {
+    RequestConfig requestConfig;
+    size_t recursiveCount;
+
+    QueueParams(const RequestConfig &reqConfig, size_t recursiveCnt) {
+        requestConfig = reqConfig;
+        recursiveCount = recursiveCnt;
+    }
+};
+
+RequestConfig parseUrl(const std::string &url);
+
+std::string getPage(const RequestConfig &startRequestConfig, int maxRedirects);
 
 /**
 * @brief Класс программы «Паук».
@@ -16,29 +37,15 @@ class Spider {
 public:
     Spider();
 
-    void process(const std::string &startHost, const std::string &startPort,
-            const std::string &startTarget);
+    void start(const RequestConfig &startRequestConfig);
 
-    /**
-    * @brief Конструктор.
-    * @param host Хост.
-    * @param port Порт.
-    * @param target Таргет.
-    */
-    // Spider(const std::string &host, const std::string &port, const std::string &target);
-
-    /**
-    * @brief Скачать HMTL страницу.
-    */
-    void loadPage(const std::string &host, const std::string &port, const std::string &target);
-
-    /**
-    * @brief Получить HTML страницу в виде строки.
-    * @return Получить HTML страницу - ответ на запрос.
-    */
-    std::string &getResponseStr();
+    void connectDb(DatabaseManager *dbManager);
 
 private:
-    std::string responseStr_; //!< Строка с ответом на запрос.
-    std::queue<std::string> queueReferences_;
+    // std::string responseStr_; //!< Строка с ответом на запрос.
+    std::queue<QueueParams> queueReferences_;
+    DatabaseManager *dbmanager_;
+    Indexer indexer_;
+
+    void process();
 };
