@@ -19,6 +19,7 @@ target_link_libraries(spider PUBLIC
     LibXml2::LibXml2
     Boost::locale
     OpenSSL::SSL
+    utils
 )
 
 target_compile_features(spider PRIVATE cxx_std_17)

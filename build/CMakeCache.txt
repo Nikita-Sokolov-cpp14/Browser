@@ -299,7 +299,10 @@ pkgcfg_lib__OPENSSL_crypto:FILEPATH=/usr/lib/x86_64-linux-gnu/libcrypto.so
 pkgcfg_lib__OPENSSL_ssl:FILEPATH=/usr/lib/x86_64-linux-gnu/libssl.so
 
 //Dependencies for the target
-spider_LIB_DEPENDS:STATIC=general;database_manager;general;LibXml2::LibXml2;general;Boost::locale;general;OpenSSL::SSL;
+spider_LIB_DEPENDS:STATIC=general;database_manager;general;LibXml2::LibXml2;general;Boost::locale;general;OpenSSL::SSL;general;utils;
+
+//Dependencies for the target
+utils_LIB_DEPENDS:STATIC=general;LibXml2::LibXml2;
 
 
 ########################
@@ -414,7 +417,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=3
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP

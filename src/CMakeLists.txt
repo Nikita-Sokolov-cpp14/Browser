@@ -3,6 +3,7 @@ project(browser)
 
 add_subdirectory(database_manager)
 add_subdirectory(spider)
+add_subdirectory(utils)
 
 add_executable(${PROJECT_NAME} main.cpp)
 
@@ -11,6 +12,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
+    utils
     database_manager
     spider
 )
