@@ -44,8 +44,6 @@ SimpleHttpClient::~SimpleHttpClient() {
 }
 
 std::string SimpleHttpClient::get(const RequestConfig &reqConfig, int max_redirects = 5) {
-    std::cout << "SimpleHttpClient::get " << reqConfig.host << ":" << reqConfig.port << reqConfig.target << std::endl;
-
     if (max_redirects <= 0) {
         throw std::runtime_error("Too many redirects");
     }
@@ -87,7 +85,7 @@ std::string SimpleHttpClient::perform_http_request(const RequestConfig &reqConfi
         auto location = res.find(http::field::location);
         if (location != res.end()) {
             std::string redirect_url = location->value().to_string();
-            std::cout << "Redirecting to: " << redirect_url << std::endl;
+            // std::cout << "Redirecting to: " << redirect_url << std::endl;
 
             // Закрываем соединение
             beast::error_code ec;
@@ -139,6 +137,8 @@ std::string SimpleHttpClient::perform_https_request(const RequestConfig &reqConf
     http::response<http::dynamic_body> res;
     http::read(*https_stream_, buffer, res);
 
+    std::cout << "ansver reieved " << std::endl;
+
     std::string response = beast::buffers_to_string(res.body().data());
 
     // Обработка редиректов
@@ -146,7 +146,7 @@ std::string SimpleHttpClient::perform_https_request(const RequestConfig &reqConf
         auto location = res.find(http::field::location);
         if (location != res.end()) {
             std::string redirect_url = location->value().to_string();
-            std::cout << "Redirecting to: " << redirect_url << std::endl;
+            // std::cout << "Redirecting to: " << redirect_url << std::endl;
 
             // Закрываем соединение
             beast::error_code ec;

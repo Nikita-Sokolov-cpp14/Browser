@@ -5,7 +5,7 @@
 
 RequestConfig parseUrl(const std::string &url) {
     RequestConfig config;
-    std::cout << url << std::endl;
+    // std::cout << url << std::endl;
 
     // Если ссылка пустая, возвращаем пустую структуру
     if (url.empty()) {
@@ -89,7 +89,7 @@ void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> 
                 std::string url = reinterpret_cast<const char *>(hrefValue);
                 RequestConfig config = parseUrl(url);
 
-                std::cout << url << std::endl;
+                // std::cout << url << std::endl;
 
                 if (!config.host.empty()) {
                     links.push_back(config);
