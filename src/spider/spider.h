@@ -7,6 +7,7 @@
 
 #include "indexer/indexer.h"
 #include "../database_manager/database_manager.h"
+#include "../common_data.h"
 
 #include <boost/beast/core.hpp>
 #include <boost/beast/http.hpp>
@@ -25,12 +26,6 @@ namespace net = boost::asio; // from <boost/asio.hpp>
 namespace ssl = boost::asio::ssl;
 using tcp = net::ip::tcp; // from <boost/asio/ip/tcp.hpp>
 
-struct RequestConfig {
-    std::string host;
-    std::string port;
-    std::string target;
-};
-
 struct QueueParams {
     RequestConfig requestConfig;
     size_t recursiveCount;
@@ -40,8 +35,6 @@ struct QueueParams {
         recursiveCount = recursiveCnt;
     }
 };
-
-RequestConfig parseUrl(const std::string &url);
 
 class SimpleHttpClient {
 public:

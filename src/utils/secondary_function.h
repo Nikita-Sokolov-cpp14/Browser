@@ -1,8 +1,9 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 
-#include "../spider/spider.h"
+#include "../common_data.h"
 
 RequestConfig parseUrl(const std::string &url);
 

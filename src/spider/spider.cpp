@@ -8,7 +8,7 @@
 #include <boost/beast/ssl.hpp>
 #include <boost/asio/ssl.hpp>
 
-#include "utils/secondary_function.h"
+#include "../utils/secondary_function.h"
 
 namespace beast = boost::beast; // from <boost/beast.hpp>
 namespace http = beast::http; // from <boost/beast/http.hpp>
