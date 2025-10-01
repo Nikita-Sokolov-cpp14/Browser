@@ -49,17 +49,15 @@ private:
     // Методы для выполнения HTTP и HTTPS запросов
     std::string perform_http_request(const RequestConfig &reqConfig, int max_redirects);
     std::string perform_https_request(const RequestConfig &reqConfig, int max_redirects);
-
-    // Общий метод для обработки редиректов
     std::string handle_redirect(const std::string& redirect_url, int max_redirects);
+
+    // Метод для установки таймаутов
+    void set_timeouts(beast::tcp_stream& stream);
+    void set_ssl_timeouts(beast::ssl_stream<beast::tcp_stream>& stream);
 
     net::io_context ioc_;
     tcp::resolver resolver_;
-
-    // Для HTTP соединений
     std::unique_ptr<beast::tcp_stream> http_stream_;
-
-    // Для HTTPS соединений
     ssl::context ssl_ctx_;
     std::unique_ptr<beast::ssl_stream<beast::tcp_stream>> https_stream_;
 };
