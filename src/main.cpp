@@ -16,13 +16,17 @@ namespace {
 // const std::string port = "80";
 // const std::string target = "/history/optout?hl=ru";
 
+const std::string host = "www.ya.ru";
+const std::string port = "443";
+const std::string target = "/";
+
 // const std::string host = "www.google.com";
 // const std::string port = "80";
 // const std::string target = "/";
 
-const std::string host = "play.google.com";
-const std::string port = "443";
-const std::string target = "/?hl=ru&tab=w8";
+// const std::string host = "play.google.com";
+// const std::string port = "443";
+// const std::string target = "/?hl=ru&tab=w8";
 
 } // namespace
 

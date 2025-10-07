@@ -289,6 +289,12 @@ browser_SOURCE_DIR:STATIC=/home/sokolovna/Netology/Browser/src
 //Dependencies for the target
 database_manager_LIB_DEPENDS:STATIC=general;PostgreSQL::PostgreSQL;general;pqxx;
 
+//Dependencies for the target
+page_loader_LIB_DEPENDS:STATIC=general;utils;general;OpenSSL::SSL;general;Boost::locale;
+
+//Dependencies for the target
+parser_LIB_DEPENDS:STATIC=general;LibXml2::LibXml2;general;Boost::locale;
+
 //Path to a library.
 pkgcfg_lib_PC_LIBXML_xml2:FILEPATH=/usr/lib/x86_64-linux-gnu/libxml2.so
 
@@ -299,7 +305,7 @@ pkgcfg_lib__OPENSSL_crypto:FILEPATH=/usr/lib/x86_64-linux-gnu/libcrypto.so
 pkgcfg_lib__OPENSSL_ssl:FILEPATH=/usr/lib/x86_64-linux-gnu/libssl.so
 
 //Dependencies for the target
-spider_LIB_DEPENDS:STATIC=general;database_manager;general;LibXml2::LibXml2;general;Boost::locale;general;OpenSSL::SSL;general;utils;
+spider_LIB_DEPENDS:STATIC=general;database_manager;general;utils;general;page_loader;general;parser;
 
 //Dependencies for the target
 utils_LIB_DEPENDS:STATIC=general;LibXml2::LibXml2;
@@ -417,7 +423,7 @@ CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_NM
 CMAKE_NM-ADVANCED:INTERNAL=1
 //number of local generators
-CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=4
+CMAKE_NUMBER_OF_MAKEFILES:INTERNAL=6
 //ADVANCED property for variable: CMAKE_OBJCOPY
 CMAKE_OBJCOPY-ADVANCED:INTERNAL=1
 //ADVANCED property for variable: CMAKE_OBJDUMP
