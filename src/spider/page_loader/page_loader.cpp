@@ -130,6 +130,12 @@ std::string SimpleHttpClient::perform_http_request(const RequestContext &ctx) {
 }
 
 std::string SimpleHttpClient::perform_https_request(const RequestContext &ctx) {
+    // TODO Хардкод, иначе метод handshake зависает.
+    if (ctx.config.host == "play.google.com" ||
+           ctx.config.host == "news.google.com") {
+        return "";
+    }
+
     try {
         https_stream_ = std::make_unique<beast::ssl_stream<beast::tcp_stream> >(ioc_, ssl_ctx_);
 
