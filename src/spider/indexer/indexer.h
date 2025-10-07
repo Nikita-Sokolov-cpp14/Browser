@@ -4,7 +4,7 @@
 #include <map>
 #include <pqxx/pqxx>
 
-#include "parser/parser.h"
+#include "../parser/parser.h"
 #include "../database_manager/database_manager.h"
 
 /**
