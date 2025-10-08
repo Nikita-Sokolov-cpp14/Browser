@@ -12,6 +12,7 @@ dbmanager_(nullptr),
 stop_(false) {
     // Создаем пул потоков по умолчанию (количество = hardware_concurrency)
     setThreadCount(std::thread::hardware_concurrency());
+    // setThreadCount(1);
 }
 
 Spider::~Spider() {
@@ -101,22 +102,25 @@ void Spider::processTask(const QueueParams &queueParams) {
               << " port: " << queueParams.requestConfig.port
               << " target: " << queueParams.requestConfig.target << std::endl;
 
-    SimpleHttpClient client;
-    std::string responseStr = client.get(queueParams.requestConfig);
+    auto client = std::make_unique<SimpleHttpClient>();
+    std::string responseStr = client->get(queueParams.requestConfig);
 
     // Вычисления индексации без блокировки
-    Indexer indexer;
-    indexer.setPage(responseStr);
+    auto indexer = std::make_unique<Indexer>();
+    indexer->setPage(responseStr);
 
     // Короткая блокировка только для записи в БД
     {
         std::unique_lock<std::mutex> dbLock(dbMutex_);
-        indexer.saveDataToDb(*dbmanager_, queueParams.requestConfig.host);
+        indexer->saveDataToDb(*dbmanager_, queueParams.requestConfig.host);
     }
 
     // Извлекаем ссылки
     std::vector<RequestConfig> configs;
-    extractAllLinks(responseStr, configs);
+    {
+        std::unique_lock<std::mutex> xmlLock(xmlMutex_);
+        extractAllLinks(responseStr, configs);
+    }
 
     // Добавляем новые задачи в очередь
     for (auto& config : configs) {

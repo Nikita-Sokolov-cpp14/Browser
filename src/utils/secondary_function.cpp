@@ -5,7 +5,6 @@
 
 RequestConfig parseUrl(const std::string &url) {
     RequestConfig config;
-    // std::cout << url << std::endl;
 
     // Если ссылка пустая, возвращаем пустую структуру
     if (url.empty()) {
@@ -16,30 +15,44 @@ RequestConfig parseUrl(const std::string &url) {
     // Находим позицию начала хоста (после ://)
     size_t scheme_end = url.find("://");
     if (scheme_end == std::string::npos) {
+        std::cerr << "parseUrl: no scheme found in URL: " << url << std::endl;
         return config;
     }
+
     std::string scheme = url.substr(0, scheme_end);
     size_t host_start = scheme_end + 3; // пропускаем "://"
 
     // Находим конец хоста (до порта или пути)
-    size_t host_end = url.find_first_of('/', host_start);
-    std::string hostPort = url.substr(host_start, host_end - host_start);
-    size_t portStart = hostPort.find_last_of(':');
+    size_t host_end = url.find('/', host_start);
 
-    bool portIsExist = false;
+    std::string hostPort;
+    if (host_end == std::string::npos) {
+        // Нет пути - весь остаток URL это host:port
+        hostPort = url.substr(host_start);
+    } else {
+        hostPort = url.substr(host_start, host_end - host_start);
+    }
 
-    if (portStart == hostPort.npos) {
+    // Обрабатываем host:port
+    size_t portStart = hostPort.find(':');
+    bool portIsExist = (portStart != std::string::npos);
+
+    if (!portIsExist) {
         config.host = hostPort;
     } else {
         config.host = hostPort.substr(0, portStart);
-        portStart++; // учитываем :
-        config.port = hostPort.substr(portStart, host_end - portStart);
-        portIsExist = true;
+        config.port = hostPort.substr(portStart + 1);
     }
-    config.target = url.substr(host_end);
 
+    // Устанавливаем путь
+    if (host_end != std::string::npos) {
+        config.target = url.substr(host_end);
+    } else {
+        config.target = "/"; // путь по умолчанию
+    }
+
+    // Устанавливаем порт по умолчанию если не найден
     if (!portIsExist) {
-        // std::cout << scheme << std::endl;
         if (scheme == "https") {
             config.port = "443";
         } else {
@@ -47,9 +60,12 @@ RequestConfig parseUrl(const std::string &url) {
         }
     }
 
-    // std::cout << config.host << std::endl;
-    // std::cout << config.port << std::endl;
-    // std::cout << config.target << std::endl;
+    // Валидация результата
+    if (config.host.empty()) {
+        std::cerr << "parseUrl: empty host in URL: " << url << std::endl;
+        return RequestConfig{}; // возвращаем пустой объект
+    }
+
     return config;
 }
 

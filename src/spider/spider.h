@@ -57,6 +57,8 @@ private:
     std::atomic<bool> stop_;
     std::atomic<size_t> activeTasks_{0}; // Счетчик активных задач
 
+    std::mutex xmlMutex_; // Добавляем этот мьютекс
+
     void workerThread();
     void processTask(const QueueParams &queueParams);
     void addTask(const QueueParams& task); // Добавление задачи в очередь

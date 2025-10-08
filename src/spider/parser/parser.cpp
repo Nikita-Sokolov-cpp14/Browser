@@ -21,7 +21,9 @@ text() {
 void Parser::parse(const std::string &source) {
     sourceStr = source;
     clearTags();
+    std::cout << "sucsess clear tags" << std::endl;
     clearPunctuation();
+    std::cout << "sucsess clear clearPunctuation" << std::endl;
     toLowerRegistr();
 }
 
@@ -34,6 +36,11 @@ std::string Parser::getSourceStr() const {
 }
 
 void Parser::clearTags() {
+    if (sourceStr.empty()) {
+        text = "";
+        return;
+    }
+
     // Парсим HTML строку
     htmlDocPtr doc = htmlReadMemory(sourceStr.c_str(), // исходная строка
             sourceStr.length(), // длина строки
@@ -41,6 +48,8 @@ void Parser::clearTags() {
             nullptr, // кодировка (автоопределение)
             HTML_PARSE_NOERROR // опции парсинга
     );
+
+    std::cout << "len: " << sourceStr.length() << std::endl;
 
     if (!doc) {
         std::cerr << "Parser::clearTags: ERROR: Can't parsing HTML" << std::endl;
@@ -54,10 +63,17 @@ void Parser::clearTags() {
 }
 
 void Parser::clearPunctuation() {
-    for (int i = 0; i < text.size() - 1; ++i) {
-        for (int j = 0; j < punctuationSymbols.size() - 1; ++j) {
+    // Защита от пустой строки
+    if (text.empty()) {
+        return;
+    }
+
+    // Используем size_t и правильные границы
+    for (size_t i = 0; i < text.size(); ++i) {
+        for (size_t j = 0; j < punctuationSymbols.size(); ++j) {
             if (text[i] == punctuationSymbols[j]) {
                 text[i] = ' ';
+                break; // Выходим после нахождения совпадения
             }
         }
     }

@@ -132,7 +132,8 @@ std::string SimpleHttpClient::perform_http_request(const RequestContext &ctx) {
 std::string SimpleHttpClient::perform_https_request(const RequestContext &ctx) {
     // TODO Хардкод, иначе метод handshake зависает.
     if (ctx.config.host == "play.google.com" ||
-           ctx.config.host == "news.google.com") {
+           ctx.config.host == "news.google.com" ||
+            ctx.config.host == "www.youtube.com") {
         return "";
     }
 
