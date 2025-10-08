@@ -15,11 +15,13 @@ text_() {
 //     setPage(htmlPage, host_);
 // }
 
-void Indexer::setPage(const std::string &htmlPage, const std::string &host,
-        DatabaseManager &dbManager) {
+void Indexer::setPage(const std::string &htmlPage) {
     parser_.parse(htmlPage);
     text_ = parser_.getText();
     calcCountWords();
+}
+
+void Indexer::saveDataToDb(DatabaseManager &dbManager, const std::string &host) {
     dbManager.writeData(host, storage_);
 }
 

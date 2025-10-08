@@ -4,6 +4,12 @@
 #include <iostream>
 #include <string>
 #include <queue>
+#include <vector>
+#include <thread>
+#include <mutex>
+#include <atomic>
+#include <condition_variable>
+#include <future>
 
 #include "indexer/indexer.h"
 #include "../database_manager/database_manager.h"
@@ -18,6 +24,9 @@ struct QueueParams {
         requestConfig = reqConfig;
         recursiveCount = recursiveCnt;
     }
+
+    // Добавляем конструктор по умолчанию
+    QueueParams() = default;
 };
 
 /**
@@ -28,17 +37,26 @@ struct QueueParams {
 class Spider {
 public:
     Spider();
+    ~Spider();
 
     void start(const RequestConfig &startRequestConfig);
 
     void connectDb(DatabaseManager *dbManager);
 
+    void setThreadCount(size_t count); // Установка количества потоков
+
 private:
-    // std::string responseStr_; //!< Строка с ответом на запрос.
-    std::queue<QueueParams> queueReferences_;
+    std::queue<QueueParams> tasksQueue_;
     DatabaseManager *dbmanager_;
-    Indexer indexer_;
-    SimpleHttpClient client_;
+
+    // Пул потоков
+    std::vector<std::thread> workers_;
+    std::mutex queueMutex_;
+    std::mutex dbMutex_; // Мьютекс для БД
+    std::condition_variable condition_;
+    std::atomic<bool> stop_;
 
     void process();
+    void workerThread();
+    void processTask(const QueueParams &queueParams);
 };

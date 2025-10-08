@@ -28,8 +28,7 @@ public:
     * @details Очищает HTML страницу от знаков тегов и знаков препинания.
     * @param htmlPage Необработанная HTML строка.
     */
-    void setPage(const std::string &htmlPage, const std::string &host,
-            DatabaseManager &dbManager);
+    void setPage(const std::string &htmlPage);
 
     /**
     * @brief Получить обработанную HTML страницу.
@@ -41,6 +40,8 @@ public:
 
     //TODO
     void setConnection(const pqxx::connection &con);
+
+    void saveDataToDb(DatabaseManager &dbManager, const std::string &host);
 
 private:
     Parser parser_; //!< Парсер HTML страницы.
