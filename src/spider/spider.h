@@ -46,17 +46,18 @@ public:
     void setThreadCount(size_t count); // Установка количества потоков
 
 private:
-    std::queue<QueueParams> tasksQueue_;
     DatabaseManager *dbmanager_;
 
-    // Пул потоков
+    // Единая очередь задач
+    std::queue<QueueParams> tasksQueue_;
     std::vector<std::thread> workers_;
     std::mutex queueMutex_;
     std::mutex dbMutex_; // Мьютекс для БД
     std::condition_variable condition_;
     std::atomic<bool> stop_;
+    std::atomic<size_t> activeTasks_{0}; // Счетчик активных задач
 
-    void process();
     void workerThread();
     void processTask(const QueueParams &queueParams);
+    void addTask(const QueueParams& task); // Добавление задачи в очередь
 };

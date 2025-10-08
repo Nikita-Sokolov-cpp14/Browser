@@ -34,6 +34,21 @@ void Spider::connectDb(DatabaseManager *dbManager) {
 }
 
 void Spider::setThreadCount(size_t count) {
+    // Останавливаем старые потоки если есть
+    {
+        std::unique_lock<std::mutex> lock(queueMutex_);
+        stop_ = true;
+    }
+    condition_.notify_all();
+
+    for (std::thread &worker : workers_) {
+        if (worker.joinable()) {
+            worker.join();
+        }
+    }
+
+    workers_.clear();
+
     // Запускаем новые потоки
     stop_ = false;
     for (size_t i = 0; i < count; ++i) {
@@ -41,28 +56,42 @@ void Spider::setThreadCount(size_t count) {
     }
 }
 
+void Spider::addTask(const QueueParams& task) {
+    std::unique_lock<std::mutex> lock(queueMutex_);
+    tasksQueue_.push(task);
+    condition_.notify_one();
+}
+
 void Spider::workerThread() {
     while (true) {
-        std::pair<QueueParams, std::promise<void> > task;
+        QueueParams task;
 
         {
             std::unique_lock<std::mutex> lock(queueMutex_);
 
-            condition_.wait(lock, [this]() { return stop_ || !tasks_.empty(); });
+            // Ждем либо новые задачи, либо сигнал остановки
+            condition_.wait(lock, [this]() {
+                return stop_ || !tasksQueue_.empty();
+            });
 
+            // Если остановка и очередь пуста - выходим
             if (stop_ && tasksQueue_.empty()) {
                 return;
             }
 
-            task = std::move(tasksQueue_.front());
-            tasksQueue_.pop();
+            // Если есть задачи - берем следующую
+            if (!tasksQueue_.empty()) {
+                task = std::move(tasksQueue_.front());
+                tasksQueue_.pop();
+                activeTasks_++;
+            } else {
+                continue;
+            }
         }
 
-        processTask(task.first);
-        task.second.set_value();
-
-        // Уведомляем основной поток, что задача завершена
-        condition_.notify_one();
+        // Обрабатываем задачу (без блокировки мьютекса)
+        processTask(task);
+        activeTasks_--;
     }
 }
 
@@ -74,60 +103,49 @@ void Spider::processTask(const QueueParams &queueParams) {
 
     SimpleHttpClient client;
     std::string responseStr = client.get(queueParams.requestConfig);
+
+    // Вычисления индексации без блокировки
     Indexer indexer;
     indexer.setPage(responseStr);
-    // Блокируем доступ к БД для индексации
+
+    // Короткая блокировка только для записи в БД
     {
         std::unique_lock<std::mutex> dbLock(dbMutex_);
         indexer.saveDataToDb(*dbmanager_, queueParams.requestConfig.host);
     }
 
+    // Извлекаем ссылки
     std::vector<RequestConfig> configs;
     extractAllLinks(responseStr, configs);
 
-    {
-        std::unique_lock<std::mutex> lock(queueMutex_);
-        for (auto &config : configs) {
-            if (queueParams.recursiveCount < maxRecursiveCount) {
-                tasksQueue_.push(QueueParams(config, queueParams.recursiveCount + 1));
-            }
+    // Добавляем новые задачи в очередь
+    for (auto& config : configs) {
+        if (queueParams.recursiveCount < maxRecursiveCount) {
+            addTask(QueueParams(config, queueParams.recursiveCount + 1));
         }
     }
-    condition_.notify_all(); // Уведомляем все потоки о новых задачах
 
     std::cout << "[" << std::this_thread::get_id() << "] ---" << std::endl;
 }
 
-void Spider::process() {
-    // Основной процесс теперь управляет очередью, а потоки обрабатывают задачи
-    while (true) {
-        QueueParams task;
-
-        {
-            std::unique_lock<std::mutex> lock(queueMutex_);
-
-            // Ждем новые задачи или завершение
-            condition_.wait(lock, [this]() { return stop_ || !tasksQueue_.empty(); });
-
-            if (stop_ && tasksQueue_.empty())
-                return;
-            if (tasksQueue_.empty())
-                continue;
-
-            task = std::move(tasksQueue_.front());
-            tasksQueue_.pop();
-        }
-
-        processTask(task);
-    }
-}
-
 void Spider::start(const RequestConfig &startRequestConfig) {
+    // Добавляем начальную задачу
+    addTask(QueueParams(startRequestConfig, 1));
+
+    // Ждем завершения всех задач
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+        std::unique_lock<std::mutex> lock(queueMutex_);
+        if (tasksQueue_.empty() && activeTasks_ == 0) {
+            break;
+        }
+    }
+
+    // Останавливаем потоки
     {
         std::unique_lock<std::mutex> lock(queueMutex_);
-        tasksQueue_.push(QueueParams(startRequestConfig, 1));
+        stop_ = true;
     }
     condition_.notify_all();
-
-    process(); // Теперь process() работает в основном потоке параллельно с workerThreads
 }
