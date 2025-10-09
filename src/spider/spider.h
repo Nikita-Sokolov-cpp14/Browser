@@ -39,7 +39,7 @@ public:
     Spider();
     ~Spider();
 
-    void start(const RequestConfig &startRequestConfig);
+    void start(const RequestConfig &startRequestConfig, int recursiveCount);
 
     void connectDb(DatabaseManager *dbManager);
 
@@ -58,6 +58,8 @@ private:
     std::atomic<size_t> activeTasks_{0}; // Счетчик активных задач
 
     std::mutex xmlMutex_; // Добавляем этот мьютекс
+
+    int maxRecursiveCount_;
 
     void workerThread();
     void processTask(const QueueParams &queueParams);

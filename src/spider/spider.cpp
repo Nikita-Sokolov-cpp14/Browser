@@ -1,15 +1,10 @@
 #include "spider.h"
 #include "../utils/secondary_function.h"
 
-namespace {
-
-const int maxRecursiveCount = 3;
-
-} // namespace
-
 Spider::Spider() :
 dbmanager_(nullptr),
-stop_(false) {
+stop_(false),
+maxRecursiveCount_(1) {
     // Создаем пул потоков по умолчанию (количество = hardware_concurrency)
     setThreadCount(std::thread::hardware_concurrency());
     // setThreadCount(1);
@@ -124,7 +119,7 @@ void Spider::processTask(const QueueParams &queueParams) {
 
     // Добавляем новые задачи в очередь
     for (auto& config : configs) {
-        if (queueParams.recursiveCount < maxRecursiveCount) {
+        if (queueParams.recursiveCount < maxRecursiveCount_) {
             addTask(QueueParams(config, queueParams.recursiveCount + 1));
         }
     }
@@ -132,7 +127,8 @@ void Spider::processTask(const QueueParams &queueParams) {
     std::cout << "[" << std::this_thread::get_id() << "] ---" << std::endl;
 }
 
-void Spider::start(const RequestConfig &startRequestConfig) {
+void Spider::start(const RequestConfig &startRequestConfig, int recursiveCount) {
+    maxRecursiveCount_ = recursiveCount;
     // Добавляем начальную задачу
     addTask(QueueParams(startRequestConfig, 1));
 
