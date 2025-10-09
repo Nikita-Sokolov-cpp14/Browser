@@ -119,3 +119,11 @@ void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> 
     xmlXPathFreeContext(xpathCtx);
     xmlFreeDoc(doc);
 }
+
+std::string convertRequestConfigToTitleString(const RequestConfig &requestConfig) {
+    std::string titleString = "host:" + requestConfig.host + " ";
+    titleString = "port:" + requestConfig.port + " ";
+    titleString = "target:" + requestConfig.target;
+
+    return titleString;
+}

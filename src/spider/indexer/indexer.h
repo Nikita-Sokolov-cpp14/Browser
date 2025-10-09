@@ -6,6 +6,7 @@
 
 #include "../parser/parser.h"
 #include "../database_manager/database_manager.h"
+#include "../common_data.h"
 
 /**
 * @brief Индексатор.
@@ -34,7 +35,12 @@ public:
     */
     std::string getText();
 
-    void saveDataToDb(DatabaseManager &dbManager, const std::string &host);
+    /**
+    * @brief Сохранить запись в БД.
+    * @param dbManager Ссылка на объект БД.
+    * @param requestConfig Параметры подключения к странице.
+    */
+    void saveDataToDb(DatabaseManager &dbManager, const RequestConfig &requestConfig);
 
 private:
     Parser parser_; //!< Парсер HTML страницы.
@@ -42,5 +48,8 @@ private:
     //! HTML станица в виде строки без тегов и знаков препинания, в нижнем регистре.
     std::string text_;
 
+    /**
+    * @brief Посчитать количество каждого слова в строке.
+    */
     void calcCountWords();
 };

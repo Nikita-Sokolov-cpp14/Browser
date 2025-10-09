@@ -1,4 +1,5 @@
 #include "indexer.h"
+#include "../utils/secondary_function.h"
 
 #include <pqxx/pqxx>
 
@@ -14,8 +15,9 @@ void Indexer::setPage(const std::string &htmlPage) {
     calcCountWords();
 }
 
-void Indexer::saveDataToDb(DatabaseManager &dbManager, const std::string &host) {
-    dbManager.writeData(host, storage_);
+void Indexer::saveDataToDb(DatabaseManager &dbManager, const RequestConfig &requestConfig) {
+    std::string pageTItle = convertRequestConfigToTitleString(requestConfig);
+    dbManager.writeData(pageTItle, storage_);
 }
 
 std::string Indexer::getText() {

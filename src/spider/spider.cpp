@@ -109,7 +109,7 @@ void Spider::processTask(const QueueParams &queueParams) {
     // Короткая блокировка только для записи в БД
     {
         std::unique_lock<std::mutex> dbLock(dbMutex_);
-        indexer->saveDataToDb(*dbmanager_, queueParams.requestConfig.host);
+        indexer->saveDataToDb(*dbmanager_, queueParams.requestConfig);
     }
 
     // Извлекаем ссылки
