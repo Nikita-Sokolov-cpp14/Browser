@@ -1,7 +1,5 @@
 #include "database_manager.h"
 
-#include "querys.h"
-
 DatabaseManager::DatabaseManager(const std::string &connectionString) :
 connection_(connectionString) {
     if (!connection_.is_open()) {
@@ -107,12 +105,12 @@ void DatabaseManager::writeData(const std::string &pageTitle,
         }
 
         txn.commit();
-        std::cout << "Все данные для страницы '" << pageTitle << "' успешно добавлены!"
+        std::cout << "DatabaseManager::writeData: Все данные для страницы '" << pageTitle << "' успешно добавлены!"
                   << std::endl;
 
         txn.commit();
 
     } catch (const std::exception &e) {
-        std::cerr << "Ошибка: " << e.what() << std::endl;
+        std::cerr << "DatabaseManager::writeData: Ошибка: " << e.what() << std::endl;
     }
 }

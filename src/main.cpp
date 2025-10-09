@@ -33,6 +33,9 @@ namespace {
 
 } // namespace
 
+/**
+* @brief Структура параметров подключения к БД PostgreSql.
+*/
 struct DatabaseConfig {
     std::string host;
     std::string port;
@@ -41,18 +44,29 @@ struct DatabaseConfig {
     std::string password;
 };
 
+/**
+* @brief Структура параметров подключения к стартовой HTML странице.
+*/
 struct StartPageParams {
     std::string host;
     std::string port;
     std::string target;
 };
 
+/**
+* @brief Стартовая структура.
+*/
 struct StartConfig {
     std::string dbConnectionString;
     StartPageParams startPageParams;
-    int recursiveCount;
+    int recursiveCount; //! Глубина рекурсии.
 };
 
+/**
+* @brief Преобразовать структуру подключения к БД в строку.
+* @param dbConfig Структура подключения к БД.
+* @return Строка спараметрами подключения к БД.
+*/
 std::string getConnectionString(const DatabaseConfig &dbConfig) {
     std::string dBconnectionString;
     dBconnectionString = "host=" + dbConfig.host;
@@ -64,11 +78,14 @@ std::string getConnectionString(const DatabaseConfig &dbConfig) {
     return dBconnectionString;
 }
 
+/**
+* @brief Загрузить данные из файла конфигурации.
+* @param startConfig Структура для записи.
+*/
 void readConfig(StartConfig &startConfig) {
     boost::property_tree::ptree pt;
 
     try {
-        // Чтение INI-файла
         boost::property_tree::read_ini("../resources/config.ini", pt);
 
         DatabaseConfig dbConfig;
@@ -93,12 +110,6 @@ int main(int argc, char **argv) {
     StartConfig startConfig;
     readConfig(startConfig);
 
-    // std::cout << startConfig.dbConnectionString << std::endl;
-    // std::cout << startConfig.startPageParams.host << std::endl;
-    // std::cout << startConfig.startPageParams.port << std::endl;
-    // std::cout << startConfig.startPageParams.target << std::endl;
-    // std::cout << startConfig.recursiveCount << std::endl;
-
     Spider spider;
     try {
         DatabaseManager dbmanager(startConfig.dbConnectionString);
@@ -108,12 +119,9 @@ int main(int argc, char **argv) {
         reqConfig.port = startConfig.startPageParams.port;
         reqConfig.target = startConfig.startPageParams.target;
 
-        spider.connectDb(&dbmanager);
+        spider.setDbManager(&dbmanager);
         spider.start(reqConfig, startConfig.recursiveCount);
     } catch (const std::exception &e) {
         std::cout << e.what() << std::endl;
     }
-
-    // const std::string url = "https://accounts.google.com:443/ServiceLogin?hl=ru&passive=true";
-    // parseUrl(url);
 }

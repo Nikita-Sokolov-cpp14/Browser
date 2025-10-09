@@ -23,37 +23,35 @@ public:
     SimpleHttpClient();
     ~SimpleHttpClient();
 
-    std::string get(const RequestConfig &reqConfig, int max_redirects = 5);
+    std::string get(const RequestConfig &reqConfig, int maxRedirects = 5);
 
 private:
     struct RequestContext {
-        const RequestConfig& config;
-        int max_redirects;
-        std::chrono::seconds timeout{10};  // Таймаут по умолчанию 10 секунд
+        const RequestConfig &config;
+        int maxRedirects;
+        std::chrono::seconds timeout {10}; // Таймаут по умолчанию 10 секунд
     };
+
+    template<typename Stream>
+    void setupTimeouts(Stream &stream, const RequestContext &ctx) {
+        stream.expires_after(ctx.timeout);
+    }
 
     bool is_redirect(http::status status);
 
     // Основной метод выполнения запроса
-    std::string perform_request(const RequestContext& ctx);
+    std::string performRequest(const RequestContext &ctx);
 
     // Методы для разных протоколов
-    std::string perform_http_request(const RequestContext& ctx);
-    std::string perform_https_request(const RequestContext& ctx);
+    std::string performHttpRequest(const RequestContext &ctx);
+    std::string performHttpsRequest(const RequestContext &ctx);
 
     // Обработка редиректов
-    std::string handle_redirect(const std::string& redirect_url, int max_redirects);
-
-    // Установка таймаутов с обработкой
-    template<typename Stream>
-    void setup_timeouts(Stream& stream, const RequestContext& ctx);
-
-    // Парсинг URL с обработкой ошибок
-    RequestConfig parse_url_safe(const std::string& url);
+    std::string handleRedirect(const std::string &redirectUrl, int maxRedirects);
 
     net::io_context ioc_;
     tcp::resolver resolver_;
-    std::unique_ptr<beast::tcp_stream> http_stream_;
-    ssl::context ssl_ctx_;
-    std::unique_ptr<beast::ssl_stream<beast::tcp_stream>> https_stream_;
+    std::unique_ptr<beast::tcp_stream> httpStream_;
+    ssl::context sslCtx_;
+    std::unique_ptr<beast::ssl_stream<beast::tcp_stream> > httpsStream_;
 };

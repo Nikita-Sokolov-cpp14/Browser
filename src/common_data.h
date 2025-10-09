@@ -2,8 +2,11 @@
 
 #include <iostream>
 
+/**
+* @brief Структура подключения  к HTML странице.
+*/
 struct RequestConfig {
-    std::string host;
-    std::string port;
-    std::string target;
+    std::string host; //!< Хост.
+    std::string port; //!< Порт.
+    std::string target; //!< Таргет.
 };

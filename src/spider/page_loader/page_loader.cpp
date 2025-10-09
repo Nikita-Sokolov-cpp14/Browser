@@ -12,38 +12,25 @@ using tcp = net::ip::tcp;
 
 SimpleHttpClient::SimpleHttpClient() :
 resolver_(ioc_),
-ssl_ctx_(ssl::context::tls_client) {
+sslCtx_(ssl::context::tls_client) {
     // Более безопасная настройка SSL
-    ssl_ctx_.set_default_verify_paths();
-    ssl_ctx_.set_verify_mode(ssl::verify_peer); // Включаем проверку сертификата
-    ssl_ctx_.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2 |
+    sslCtx_.set_default_verify_paths();
+    sslCtx_.set_verify_mode(ssl::verify_peer); // Включаем проверку сертификата
+    sslCtx_.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2 |
             ssl::context::no_sslv3 | ssl::context::no_tlsv1 | ssl::context::single_dh_use);
 }
 
 SimpleHttpClient::~SimpleHttpClient() {
     // Безопасное закрытие соединений
-    if (http_stream_ && http_stream_->socket().is_open()) {
+    if (httpStream_ && httpStream_->socket().is_open()) {
         beast::error_code ec;
-        http_stream_->socket().shutdown(tcp::socket::shutdown_both, ec);
-        http_stream_->close();
+        httpStream_->socket().shutdown(tcp::socket::shutdown_both, ec);
+        httpStream_->close();
     }
 
-    if (https_stream_ && beast::get_lowest_layer(*https_stream_).socket().is_open()) {
+    if (httpsStream_ && beast::get_lowest_layer(*httpsStream_).socket().is_open()) {
         beast::error_code ec;
-        beast::get_lowest_layer(*https_stream_).close();
-    }
-}
-
-template<typename Stream>
-void SimpleHttpClient::setup_timeouts(Stream &stream, const RequestContext &ctx) {
-    stream.expires_after(ctx.timeout);
-}
-
-RequestConfig SimpleHttpClient::parse_url_safe(const std::string &url) {
-    try {
-        return parseUrl(url);
-    } catch (const std::exception &e) {
-        throw std::runtime_error("Failed to parse redirect URL: " + std::string(e.what()));
+        beast::get_lowest_layer(*httpsStream_).close();
     }
 }
 
@@ -53,27 +40,27 @@ std::string SimpleHttpClient::get(const RequestConfig &reqConfig, int max_redire
     }
 
     RequestContext ctx {reqConfig, max_redirects};
-    return perform_request(ctx);
+    return performRequest(ctx);
 }
 
-std::string SimpleHttpClient::perform_request(const RequestContext &ctx) {
+std::string SimpleHttpClient::performRequest(const RequestContext &ctx) {
     if (ctx.config.port == "443") {
-        return perform_https_request(ctx);
+        return performHttpsRequest(ctx);
     } else {
-        return perform_http_request(ctx);
+        return performHttpRequest(ctx);
     }
 }
 
-std::string SimpleHttpClient::perform_http_request(const RequestContext &ctx) {
+std::string SimpleHttpClient::performHttpRequest(const RequestContext &ctx) {
     try {
-        http_stream_ = std::make_unique<beast::tcp_stream>(ioc_);
-        setup_timeouts(*http_stream_, ctx);
+        httpStream_ = std::make_unique<beast::tcp_stream>(ioc_);
+        setupTimeouts(*httpStream_, ctx);
 
         std::cout << "Resolving: " << ctx.config.host << ":" << ctx.config.port << std::endl;
         auto const results = resolver_.resolve(ctx.config.host, ctx.config.port);
 
         std::cout << "Connecting to HTTP..." << std::endl;
-        http_stream_->connect(results);
+        httpStream_->connect(results);
 
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
         req.set(http::field::host, ctx.config.host);
@@ -83,12 +70,12 @@ std::string SimpleHttpClient::perform_http_request(const RequestContext &ctx) {
 
         std::cout << "Sending HTTP request to: " << ctx.config.host << ctx.config.target
                   << std::endl;
-        http::write(*http_stream_, req);
+        http::write(*httpStream_, req);
 
         beast::flat_buffer buffer;
         http::response<http::dynamic_body> res;
 
-        http::read(*http_stream_, buffer, res);
+        http::read(*httpStream_, buffer, res);
 
         std::string response = beast::buffers_to_string(res.body().data());
         std::cout << "Received HTTP response: " << res.result() << std::endl;
@@ -100,16 +87,16 @@ std::string SimpleHttpClient::perform_http_request(const RequestContext &ctx) {
                 std::cout << "Redirecting to: " << redirect_url << std::endl;
 
                 beast::error_code ec;
-                http_stream_->socket().shutdown(tcp::socket::shutdown_both, ec);
-                http_stream_.reset();
+                httpStream_->socket().shutdown(tcp::socket::shutdown_both, ec);
+                httpStream_.reset();
 
-                return handle_redirect(redirect_url, ctx.max_redirects - 1);
+                return handleRedirect(redirect_url, ctx.maxRedirects - 1);
             }
         }
 
         beast::error_code ec;
-        http_stream_->socket().shutdown(tcp::socket::shutdown_both, ec);
-        http_stream_.reset();
+        httpStream_->socket().shutdown(tcp::socket::shutdown_both, ec);
+        httpStream_.reset();
 
         return response;
 
@@ -120,16 +107,16 @@ std::string SimpleHttpClient::perform_http_request(const RequestContext &ctx) {
         }
         throw std::runtime_error("HTTP request failed for " + ctx.config.host + ": " + e.what());
     } catch (const std::exception &e) {
-        if (http_stream_) {
+        if (httpStream_) {
             beast::error_code ec;
-            http_stream_->socket().shutdown(tcp::socket::shutdown_both, ec);
-            http_stream_.reset();
+            httpStream_->socket().shutdown(tcp::socket::shutdown_both, ec);
+            httpStream_.reset();
         }
         throw std::runtime_error("HTTP request failed for " + ctx.config.host + ": " + e.what());
     }
 }
 
-std::string SimpleHttpClient::perform_https_request(const RequestContext &ctx) {
+std::string SimpleHttpClient::performHttpsRequest(const RequestContext &ctx) {
     // TODO Хардкод, иначе метод handshake зависает.
     if (ctx.config.host == "play.google.com" ||
            ctx.config.host == "news.google.com" ||
@@ -138,12 +125,12 @@ std::string SimpleHttpClient::perform_https_request(const RequestContext &ctx) {
     }
 
     try {
-        https_stream_ = std::make_unique<beast::ssl_stream<beast::tcp_stream> >(ioc_, ssl_ctx_);
+        httpsStream_ = std::make_unique<beast::ssl_stream<beast::tcp_stream> >(ioc_, sslCtx_);
 
-        setup_timeouts(beast::get_lowest_layer(*https_stream_), ctx);
+        setupTimeouts(beast::get_lowest_layer(*httpsStream_), ctx);
 
         // Установка SNI
-        if (!SSL_set_tlsext_host_name(https_stream_->native_handle(), ctx.config.host.c_str())) {
+        if (!SSL_set_tlsext_host_name(httpsStream_->native_handle(), ctx.config.host.c_str())) {
             beast::error_code ec {static_cast<int>(::ERR_get_error()),
                     net::error::get_ssl_category()};
             throw beast::system_error {ec};
@@ -153,10 +140,10 @@ std::string SimpleHttpClient::perform_https_request(const RequestContext &ctx) {
         auto const results = resolver_.resolve(ctx.config.host, ctx.config.port);
 
         std::cout << "Connecting to HTTPS..." << std::endl;
-        beast::get_lowest_layer(*https_stream_).connect(results);
+        beast::get_lowest_layer(*httpsStream_).connect(results);
 
         std::cout << "Performing SSL handshake..." << std::endl;
-        https_stream_->handshake(ssl::stream_base::client);
+        httpsStream_->handshake(ssl::stream_base::client);
         std::cout << "SSL handshake successful" << std::endl;
 
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
@@ -167,12 +154,12 @@ std::string SimpleHttpClient::perform_https_request(const RequestContext &ctx) {
 
         std::cout << "Sending HTTPS request to: " << ctx.config.host << ctx.config.target
                   << std::endl;
-        http::write(*https_stream_, req);
+        http::write(*httpsStream_, req);
 
         beast::flat_buffer buffer;
         http::response<http::dynamic_body> res;
 
-        http::read(*https_stream_, buffer, res);
+        http::read(*httpsStream_, buffer, res);
 
         std::string response = beast::buffers_to_string(res.body().data());
         std::cout << "Received HTTPS response: " << res.result() << std::endl;
@@ -184,16 +171,16 @@ std::string SimpleHttpClient::perform_https_request(const RequestContext &ctx) {
                 std::cout << "Redirecting to: " << redirect_url << std::endl;
 
                 beast::error_code ec;
-                https_stream_->shutdown(ec);
-                https_stream_.reset();
+                httpsStream_->shutdown(ec);
+                httpsStream_.reset();
 
-                return handle_redirect(redirect_url, ctx.max_redirects - 1);
+                return handleRedirect(redirect_url, ctx.maxRedirects - 1);
             }
         }
 
         beast::error_code ec;
-        https_stream_->shutdown(ec);
-        https_stream_.reset();
+        httpsStream_->shutdown(ec);
+        httpsStream_.reset();
 
         return response;
 
@@ -204,19 +191,26 @@ std::string SimpleHttpClient::perform_https_request(const RequestContext &ctx) {
         }
         throw std::runtime_error("HTTPS request failed for " + ctx.config.host + ": " + e.what());
     } catch (const std::exception &e) {
-        if (https_stream_) {
+        if (httpsStream_) {
             beast::error_code ec;
-            https_stream_->shutdown(ec);
-            https_stream_.reset();
+            httpsStream_->shutdown(ec);
+            httpsStream_.reset();
         }
         throw std::runtime_error("HTTPS request failed for " + ctx.config.host + ": " + e.what());
     }
 }
 
-std::string SimpleHttpClient::handle_redirect(const std::string &redirect_url, int max_redirects) {
-    RequestConfig config = parse_url_safe(redirect_url);
+std::string SimpleHttpClient::handleRedirect(const std::string &redirect_url, int max_redirects) {
+    RequestConfig config;
+
+    try {
+        config = parseUrl(redirect_url);
+    } catch (const std::exception &e) {
+        throw std::runtime_error("Failed to parse redirect URL: " + std::string(e.what()));
+    }
+
     RequestContext ctx {config, max_redirects};
-    return perform_request(ctx);
+    return performRequest(ctx);
 }
 
 bool SimpleHttpClient::is_redirect(http::status status) {
