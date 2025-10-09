@@ -52,7 +52,7 @@ void Spider::setThreadCount(size_t count) {
     }
 }
 
-void Spider::addTask(const QueueParams& task) {
+void Spider::addTask(const QueueParams &task) {
     std::unique_lock<std::mutex> lock(queueMutex_);
     tasksQueue_.push(task);
     condition_.notify_one();
@@ -66,9 +66,7 @@ void Spider::workerThread() {
             std::unique_lock<std::mutex> lock(queueMutex_);
 
             // Ждем либо новые задачи, либо сигнал остановки
-            condition_.wait(lock, [this]() {
-                return stop_ || !tasksQueue_.empty();
-            });
+            condition_.wait(lock, [this]() { return stop_ || !tasksQueue_.empty(); });
 
             // Если остановка и очередь пуста - выходим
             if (stop_ && tasksQueue_.empty()) {
@@ -88,6 +86,10 @@ void Spider::workerThread() {
         // Обрабатываем задачу (без блокировки мьютекса)
         processTask(task);
         activeTasks_--;
+
+        if (tasksQueue_.empty() && activeTasks_ == 0) {
+            condition_.notify_all(); // Уведомляем main thread
+        }
     }
 }
 
@@ -111,14 +113,16 @@ void Spider::processTask(const QueueParams &queueParams) {
     }
 
     // Извлекаем ссылки
+    // std::vector<RequestConfig> configs;
+    // {
+    //     std::unique_lock<std::mutex> xmlLock(xmlMutex_);
+    //     extractAllLinks(responseStr, configs);
+    // }
     std::vector<RequestConfig> configs;
-    {
-        std::unique_lock<std::mutex> xmlLock(xmlMutex_);
-        extractAllLinks(responseStr, configs);
-    }
+    extractAllLinks(responseStr, configs);
 
     // Добавляем новые задачи в очередь
-    for (auto& config : configs) {
+    for (auto &config : configs) {
         if (queueParams.recursiveCount < maxRecursiveCount_) {
             addTask(QueueParams(config, queueParams.recursiveCount + 1));
         }
@@ -129,23 +133,12 @@ void Spider::processTask(const QueueParams &queueParams) {
 
 void Spider::start(const RequestConfig &startRequestConfig, int recursiveCount) {
     maxRecursiveCount_ = recursiveCount;
-    // Добавляем начальную задачу
     addTask(QueueParams(startRequestConfig, 1));
 
-    // Ждем завершения всех задач
-    while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    // Эффективное ожидание вместо sleep
+    std::unique_lock<std::mutex> lock(queueMutex_);
+    condition_.wait(lock, [this]() { return tasksQueue_.empty() && activeTasks_ == 0; });
 
-        std::unique_lock<std::mutex> lock(queueMutex_);
-        if (tasksQueue_.empty() && activeTasks_ == 0) {
-            break;
-        }
-    }
-
-    // Останавливаем потоки
-    {
-        std::unique_lock<std::mutex> lock(queueMutex_);
-        stop_ = true;
-    }
+    stop_ = true;
     condition_.notify_all();
 }
