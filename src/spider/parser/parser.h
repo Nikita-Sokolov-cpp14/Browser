@@ -12,6 +12,9 @@
 */
 class Parser {
 public:
+    /**
+    * @brief Конструктор.
+    */
     Parser();
 
     /**
@@ -26,15 +29,9 @@ public:
     */
     std::string getText() const;
 
-    /**
-    * @brief Получить исходную HTML страницу в виде строки.
-    * @return Получить исходную HTML страницу в виде строки.
-    */
-    std::string getSourceStr() const;
-
 private:
-    std::string sourceStr; //!< Исходная HTML страница в виде строки.
-    std::string text; //!< Преобразованная HTML страница.
+    std::string sourceStr_; //!< Исходная HTML страница в виде строки.
+    std::string text_; //!< Преобразованная HTML страница.
 
     /**
     * @brief Очистить HTML страницу от тегов.

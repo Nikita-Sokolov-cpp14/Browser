@@ -13,15 +13,13 @@
 class Indexer {
 public:
     //TODO Вынести отдельно. Используется и в классе БД.
+    //! Тип хранилища счетчика слов.
     typedef std::map<std::string, int> Storage;
 
+    /**
+    * @brief Конструктор.
+    */
     Indexer();
-
-    // /**
-    // * @brief Конструктор.
-    // * @param htmlPage Необработанная HTML строка.
-    // */
-    // Indexer(const std::string &htmlPage, const std::string &host);
 
     /**
     * @brief Установить HTML страницу.
@@ -36,19 +34,11 @@ public:
     */
     std::string getText();
 
-    Storage getStorage() const;
-
-    //TODO
-    void setConnection(const pqxx::connection &con);
-
     void saveDataToDb(DatabaseManager &dbManager, const std::string &host);
 
 private:
     Parser parser_; //!< Парсер HTML страницы.
-
-    Storage storage_;
-    std::string host_;
-
+    Storage storage_; //!< Хранилище счетчика слов.
     //! HTML станица в виде строки без тегов и знаков препинания, в нижнем регистре.
     std::string text_;
 
