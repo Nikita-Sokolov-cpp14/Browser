@@ -122,8 +122,8 @@ void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> 
 
 std::string convertRequestConfigToTitleString(const RequestConfig &requestConfig) {
     std::string titleString = "host:" + requestConfig.host + " ";
-    titleString = "port:" + requestConfig.port + " ";
-    titleString = "target:" + requestConfig.target;
+    titleString += "port:" + requestConfig.port + " ";
+    titleString += "target:" + requestConfig.target;
 
     return titleString;
 }

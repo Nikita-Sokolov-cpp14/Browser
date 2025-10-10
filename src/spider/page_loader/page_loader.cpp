@@ -3,13 +3,23 @@
 
 #include <iostream>
 #include <chrono>
+#include <vector>
+
+namespace {
+
+/**
+* @brief Вектор с заблокированными страницами
+* @details При попадании на данные страницы задача виснет в функции handshake.
+*/
+std::vector<std::string> blackList {"play.google.com", "news.google.com", "www.youtube.com"};
+
+} // namespace
 
 PageLoader::PageLoader() :
 resolver_(ioc_),
 sslCtx_(ssl::context::tls_client) {
-    // Более безопасная настройка SSL
     sslCtx_.set_default_verify_paths();
-    sslCtx_.set_verify_mode(ssl::verify_peer); // Включаем проверку сертификата
+    sslCtx_.set_verify_mode(ssl::verify_peer);
     sslCtx_.set_options(ssl::context::default_workarounds | ssl::context::no_sslv2 |
             ssl::context::no_sslv3 | ssl::context::no_tlsv1 | ssl::context::single_dh_use);
 }
@@ -28,12 +38,12 @@ PageLoader::~PageLoader() {
     }
 }
 
-std::string PageLoader::get(const RequestConfig &reqConfig, int max_redirects) {
-    if (max_redirects <= 0) {
+std::string PageLoader::get(const RequestConfig &reqConfig, int countRedirects) {
+    if (countRedirects <= 0) {
         throw std::runtime_error("Too many redirects");
     }
 
-    RequestContext ctx {reqConfig, max_redirects};
+    RequestContext ctx {reqConfig, countRedirects};
     return performRequest(ctx);
 }
 
@@ -49,11 +59,7 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
     try {
         httpStream_ = std::make_unique<beast::tcp_stream>(ioc_);
         setupTimeouts(*httpStream_, ctx);
-
-        std::cout << "Resolving: " << ctx.config.host << ":" << ctx.config.port << std::endl;
         auto const results = resolver_.resolve(ctx.config.host, ctx.config.port);
-
-        std::cout << "Connecting to HTTP..." << std::endl;
         httpStream_->connect(results);
 
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
@@ -61,9 +67,6 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
         req.set(http::field::user_agent, "Mozilla/5.0 (compatible; PageLoader)");
         req.set(http::field::accept, "*/*");
         req.set(http::field::accept_encoding, "identity"); // Отключаем сжатие для простоты
-
-        std::cout << "Sending HTTP request to: " << ctx.config.host << ctx.config.target
-                  << std::endl;
         http::write(*httpStream_, req);
 
         beast::flat_buffer buffer;
@@ -72,9 +75,10 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
         http::read(*httpStream_, buffer, res);
 
         std::string response = beast::buffers_to_string(res.body().data());
-        std::cout << "Received HTTP response: " << res.result() << std::endl;
+        std::cout << "Received HTTP response for " << ctx.config.host << " " << ctx.config.port
+                  << " " << ctx.config.target << " " << res.result() << std::endl;
 
-        if (is_redirect(res.result())) {
+        if (isRedirect(res.result())) {
             auto location = res.find(http::field::location);
             if (location != res.end()) {
                 std::string redirect_url = location->value().to_string();
@@ -84,7 +88,7 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
                 httpStream_->socket().shutdown(tcp::socket::shutdown_both, ec);
                 httpStream_.reset();
 
-                return handleRedirect(redirect_url, ctx.maxRedirects - 1);
+                return handleRedirect(redirect_url, ctx.countRedirects - 1);
             }
         }
 
@@ -111,11 +115,12 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
 }
 
 std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
-    // TODO Хардкод, иначе метод handshake зависает.
-    if (ctx.config.host == "play.google.com" ||
-           ctx.config.host == "news.google.com" ||
-            ctx.config.host == "www.youtube.com") {
-        return "";
+    for (int i = 0; i < blackList.size(); ++i) {
+        if (blackList[i] == ctx.config.host) {
+            std::cout << "PageLoader::performHttpsRequest: page " << ctx.config.host
+                      << " in black list" << std::endl;
+            return "";
+        }
     }
 
     try {
@@ -130,24 +135,15 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
             throw beast::system_error {ec};
         }
 
-        std::cout << "Resolving: " << ctx.config.host << ":" << ctx.config.port << std::endl;
         auto const results = resolver_.resolve(ctx.config.host, ctx.config.port);
-
-        std::cout << "Connecting to HTTPS..." << std::endl;
         beast::get_lowest_layer(*httpsStream_).connect(results);
-
-        std::cout << "Performing SSL handshake..." << std::endl;
         httpsStream_->handshake(ssl::stream_base::client);
-        std::cout << "SSL handshake successful" << std::endl;
-
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
         req.set(http::field::host, ctx.config.host);
         req.set(http::field::user_agent, "Mozilla/5.0 (compatible; PageLoader)");
         req.set(http::field::accept, "*/*");
         req.set(http::field::accept_encoding, "identity");
 
-        std::cout << "Sending HTTPS request to: " << ctx.config.host << ctx.config.target
-                  << std::endl;
         http::write(*httpsStream_, req);
 
         beast::flat_buffer buffer;
@@ -156,9 +152,10 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
         http::read(*httpsStream_, buffer, res);
 
         std::string response = beast::buffers_to_string(res.body().data());
-        std::cout << "Received HTTPS response: " << res.result() << std::endl;
+        std::cout << "Received HTTP response for " << ctx.config.host << " " << ctx.config.port
+                  << " " << ctx.config.target << " " << res.result() << std::endl;
 
-        if (is_redirect(res.result())) {
+        if (isRedirect(res.result())) {
             auto location = res.find(http::field::location);
             if (location != res.end()) {
                 std::string redirect_url = location->value().to_string();
@@ -168,7 +165,7 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
                 httpsStream_->shutdown(ec);
                 httpsStream_.reset();
 
-                return handleRedirect(redirect_url, ctx.maxRedirects - 1);
+                return handleRedirect(redirect_url, ctx.countRedirects - 1);
             }
         }
 
@@ -194,20 +191,19 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
     }
 }
 
-std::string PageLoader::handleRedirect(const std::string &redirect_url, int max_redirects) {
+std::string PageLoader::handleRedirect(const std::string &redirect_url, int countRedirects) {
     RequestConfig config;
-
     try {
         config = parseUrl(redirect_url);
     } catch (const std::exception &e) {
         throw std::runtime_error("Failed to parse redirect URL: " + std::string(e.what()));
     }
 
-    RequestContext ctx {config, max_redirects};
+    RequestContext ctx {config, countRedirects};
     return performRequest(ctx);
 }
 
-bool PageLoader::is_redirect(http::status status) {
+bool PageLoader::isRedirect(http::status status) {
     return status == http::status::moved_permanently || status == http::status::found ||
             status == http::status::see_other || status == http::status::temporary_redirect ||
             status == http::status::permanent_redirect;

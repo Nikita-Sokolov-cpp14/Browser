@@ -36,34 +36,68 @@ public:
     /**
     * @brief Скачать HTML страницу.
     * @param reqConfig Параметры запроса.
-    * @param maxRedirects
+    * @param countRedirects Число редиректов.
     * @return Строка с содержимым HTML страницы.
     */
-    std::string get(const RequestConfig &reqConfig, int maxRedirects = 5);
+    std::string get(const RequestConfig &reqConfig, int countRedirects = 5);
 
 private:
+    /**
+    * @brief Контекст запроса HTML страницы.
+    */
     struct RequestContext {
-        const RequestConfig &config;
-        int maxRedirects;
-        std::chrono::seconds timeout {10}; // Таймаут по умолчанию 10 секунд
+        const RequestConfig &config; //!< Параметры запроса.
+        int countRedirects; //!< Число редиректов.
+        std::chrono::seconds timeout {10}; //!< Таймаут (по умолчанию 10 секунд).
     };
 
+    /**
+    * @brief Установить время ожидания ответа на запрос.
+    * @tparam Stream Тип потока.
+    * @param stream Поток.
+    * @param ctx Контекст запроса.
+    */
     template<typename Stream>
     void setupTimeouts(Stream &stream, const RequestContext &ctx) {
         stream.expires_after(ctx.timeout);
     }
 
-    bool is_redirect(http::status status);
+    /**
+    * @brief Проверить, относится ли данный статус к редиректу.
+    * @param status Статус.
+    * @return true, если статус относится к редиректу. False - иначе.
+    */
+    bool isRedirect(http::status status);
 
-    // Основной метод выполнения запроса
+    /**
+    * @brief Выполнить запрос.
+    * @param ctx Контекст запроса.
+    * @return Строка с ответом на запрос.
+    */
     std::string performRequest(const RequestContext &ctx);
 
-    // Методы для разных протоколов
+    /**
+    * @brief Выполнить запрос для протокола HTTP.
+    * @param ctx Контекст запроса.
+    * @return Строка с ответом на запрос.
+    */
     std::string performHttpRequest(const RequestContext &ctx);
+
+    /**
+    * @brief Выполнить запрос для протокола HTTPS.
+    * @param ctx Контекст запроса.
+    * @return Строка с ответом на запрос.
+    */
     std::string performHttpsRequest(const RequestContext &ctx);
 
     // Обработка редиректов
-    std::string handleRedirect(const std::string &redirectUrl, int maxRedirects);
+    /**
+    * @brief Обработать редиректы.
+    * @param redirectUrl URL редиректа.
+    * @param countRedirects Число редиректов.
+    * @return Строка с ответом на запрос.
+    */
+    std::string handleRedirect(const std::string &redirectUrl, int countRedirects);
 
     net::io_context ioc_;
     tcp::resolver resolver_;
