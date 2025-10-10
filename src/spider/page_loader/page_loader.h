@@ -18,11 +18,27 @@ namespace net = boost::asio;
 namespace ssl = boost::asio::ssl;
 using tcp = net::ip::tcp;
 
-class SimpleHttpClient {
+/**
+* @brief Класс, который скачивает HTML страницу.
+*/
+class PageLoader {
 public:
-    SimpleHttpClient();
-    ~SimpleHttpClient();
+    /**
+    * @brief Конструктор.
+    */
+    PageLoader();
 
+    /**
+    * @brief Деструктор.
+    */
+    ~PageLoader();
+
+    /**
+    * @brief Скачать HTML страницу.
+    * @param reqConfig Параметры запроса.
+    * @param maxRedirects
+    * @return Строка с содержимым HTML страницы.
+    */
     std::string get(const RequestConfig &reqConfig, int maxRedirects = 5);
 
 private:

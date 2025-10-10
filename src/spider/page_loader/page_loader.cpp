@@ -4,13 +4,7 @@
 #include <iostream>
 #include <chrono>
 
-namespace beast = boost::beast;
-namespace http = beast::http;
-namespace net = boost::asio;
-namespace ssl = boost::asio::ssl;
-using tcp = net::ip::tcp;
-
-SimpleHttpClient::SimpleHttpClient() :
+PageLoader::PageLoader() :
 resolver_(ioc_),
 sslCtx_(ssl::context::tls_client) {
     // Более безопасная настройка SSL
@@ -20,7 +14,7 @@ sslCtx_(ssl::context::tls_client) {
             ssl::context::no_sslv3 | ssl::context::no_tlsv1 | ssl::context::single_dh_use);
 }
 
-SimpleHttpClient::~SimpleHttpClient() {
+PageLoader::~PageLoader() {
     // Безопасное закрытие соединений
     if (httpStream_ && httpStream_->socket().is_open()) {
         beast::error_code ec;
@@ -34,7 +28,7 @@ SimpleHttpClient::~SimpleHttpClient() {
     }
 }
 
-std::string SimpleHttpClient::get(const RequestConfig &reqConfig, int max_redirects) {
+std::string PageLoader::get(const RequestConfig &reqConfig, int max_redirects) {
     if (max_redirects <= 0) {
         throw std::runtime_error("Too many redirects");
     }
@@ -43,7 +37,7 @@ std::string SimpleHttpClient::get(const RequestConfig &reqConfig, int max_redire
     return performRequest(ctx);
 }
 
-std::string SimpleHttpClient::performRequest(const RequestContext &ctx) {
+std::string PageLoader::performRequest(const RequestContext &ctx) {
     if (ctx.config.port == "443") {
         return performHttpsRequest(ctx);
     } else {
@@ -51,7 +45,7 @@ std::string SimpleHttpClient::performRequest(const RequestContext &ctx) {
     }
 }
 
-std::string SimpleHttpClient::performHttpRequest(const RequestContext &ctx) {
+std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
     try {
         httpStream_ = std::make_unique<beast::tcp_stream>(ioc_);
         setupTimeouts(*httpStream_, ctx);
@@ -64,7 +58,7 @@ std::string SimpleHttpClient::performHttpRequest(const RequestContext &ctx) {
 
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
         req.set(http::field::host, ctx.config.host);
-        req.set(http::field::user_agent, "Mozilla/5.0 (compatible; SimpleHttpClient)");
+        req.set(http::field::user_agent, "Mozilla/5.0 (compatible; PageLoader)");
         req.set(http::field::accept, "*/*");
         req.set(http::field::accept_encoding, "identity"); // Отключаем сжатие для простоты
 
@@ -116,7 +110,7 @@ std::string SimpleHttpClient::performHttpRequest(const RequestContext &ctx) {
     }
 }
 
-std::string SimpleHttpClient::performHttpsRequest(const RequestContext &ctx) {
+std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
     // TODO Хардкод, иначе метод handshake зависает.
     if (ctx.config.host == "play.google.com" ||
            ctx.config.host == "news.google.com" ||
@@ -148,7 +142,7 @@ std::string SimpleHttpClient::performHttpsRequest(const RequestContext &ctx) {
 
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
         req.set(http::field::host, ctx.config.host);
-        req.set(http::field::user_agent, "Mozilla/5.0 (compatible; SimpleHttpClient)");
+        req.set(http::field::user_agent, "Mozilla/5.0 (compatible; PageLoader)");
         req.set(http::field::accept, "*/*");
         req.set(http::field::accept_encoding, "identity");
 
@@ -200,7 +194,7 @@ std::string SimpleHttpClient::performHttpsRequest(const RequestContext &ctx) {
     }
 }
 
-std::string SimpleHttpClient::handleRedirect(const std::string &redirect_url, int max_redirects) {
+std::string PageLoader::handleRedirect(const std::string &redirect_url, int max_redirects) {
     RequestConfig config;
 
     try {
@@ -213,7 +207,7 @@ std::string SimpleHttpClient::handleRedirect(const std::string &redirect_url, in
     return performRequest(ctx);
 }
 
-bool SimpleHttpClient::is_redirect(http::status status) {
+bool PageLoader::is_redirect(http::status status) {
     return status == http::status::moved_permanently || status == http::status::found ||
             status == http::status::see_other || status == http::status::temporary_redirect ||
             status == http::status::permanent_redirect;

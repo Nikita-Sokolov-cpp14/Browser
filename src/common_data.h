@@ -3,7 +3,7 @@
 #include <iostream>
 
 /**
-* @brief Структура подключения  к HTML странице.
+* @brief Параметры запроса HTML страницы.
 */
 struct RequestConfig {
     std::string host; //!< Хост.

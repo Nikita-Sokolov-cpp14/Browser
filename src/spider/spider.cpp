@@ -99,7 +99,7 @@ void Spider::processTask(const QueueParams &queueParams) {
                   << " port: " << queueParams.requestConfig.port
                   << " target: " << queueParams.requestConfig.target << std::endl;
 
-        auto client = std::make_unique<SimpleHttpClient>();
+        auto client = std::make_unique<PageLoader>();
         std::string responseStr = client->get(queueParams.requestConfig);
 
         // Вычисления индексации без блокировки

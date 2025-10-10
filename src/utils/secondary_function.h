@@ -8,7 +8,7 @@
 /**
 * @brief Преобразовать строку с URL в структуру.
 * @param url Строка с исходным URL.
-* @return Структура подключения.
+* @return Параметры запроса HTML страницы.
 */
 RequestConfig parseUrl(const std::string &url);
 
