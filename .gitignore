@@ -1,3 +1,5 @@
+vscode/
+build/
 *.scenario
 *.user
 .DS_Store
