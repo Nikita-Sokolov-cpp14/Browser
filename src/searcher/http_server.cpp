@@ -157,7 +157,10 @@ std::string HTTPSession::parseFormData(const std::string &body) {
             if (encoded_query[i] == '+') {
                 decoded += ' ';
             } else if (encoded_query[i] == '%' && i + 2 < encoded_query.size()) {
-                decoded += encoded_query[i];
+                std::string hex = encoded_query.substr(i + 1, 2);
+                char ch = static_cast<char>(std::stoi(hex, nullptr, 16));
+                decoded += ch;
+                i += 2;
             } else {
                 decoded += encoded_query[i];
             }
