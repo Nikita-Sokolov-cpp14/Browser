@@ -1,5 +1,23 @@
 #include "database_manager.h"
 
+namespace {
+
+std::string makeUrlFromRequestConfig(const RequestConfig &config) {
+    std::string url;
+
+    if (config.port == "443") {
+        url = "https://";
+    } else if (config.port == "80") {
+        url = "http://";
+    }
+    url += config.host;
+    url += config.target;
+
+    return url;
+}
+
+}
+
 DatabaseManager::DatabaseManager(const std::string &connectionString) :
 connection_(connectionString) {
     if (!connection_.is_open()) {
@@ -150,7 +168,7 @@ void DatabaseManager::getPagesByWord(const std::string &targetWord,
         pqxx::work txn(connection_);
 
         std::string query = R"(
-            SELECT DISTINCT p.title, w.word_count
+            SELECT DISTINCT p.host, p.port, p.target, w.word_count
             FROM pages p
             JOIN page_words pw ON p.id = pw.page_id
             JOIN words w ON pw.word_id = w.id_word
@@ -160,9 +178,13 @@ void DatabaseManager::getPagesByWord(const std::string &targetWord,
         pqxx::result result = txn.exec_params(query, targetWord);
 
         for (const auto &row : result) {
-            std::string word = row[0].as<std::string>();
-            int count = row[1].as<int>();
-            results.push_back(std::make_pair(word, count));
+            RequestConfig requestConfig;
+            requestConfig.host = row[0].as<std::string>();
+            requestConfig.port = row[1].as<std::string>();
+            requestConfig.target = row[2].as<std::string>();
+            std::string url = makeUrlFromRequestConfig(requestConfig);
+            int count = row[3].as<int>();
+            results.push_back(std::make_pair(url, count));
         }
 
         txn.commit();
