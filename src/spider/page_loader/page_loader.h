@@ -97,7 +97,8 @@ private:
     * @param countRedirects Число редиректов.
     * @return Строка с ответом на запрос.
     */
-    std::string handleRedirect(const std::string &redirectUrl, int countRedirects);
+    std::string handleRedirect(const std::string &redirectUrl, int countRedirects,
+            const RequestConfig &sourceConfig);
 
     net::io_context ioc_;
     tcp::resolver resolver_;

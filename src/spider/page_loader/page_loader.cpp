@@ -5,9 +5,7 @@
 #include <chrono>
 #include <vector>
 
-namespace {
-
-} // namespace
+namespace {} // namespace
 
 PageLoader::PageLoader() :
 resolver_(ioc_),
@@ -65,10 +63,11 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
 
         // Асинхронный connect
         httpStream_->async_connect(results,
-            [&connect_ec, &connect_completed](beast::error_code ec, tcp::resolver::results_type::endpoint_type) {
-                connect_ec = ec;
-                connect_completed = true;
-            });
+                [&connect_ec, &connect_completed](beast::error_code ec,
+                        tcp::resolver::results_type::endpoint_type) {
+                    connect_ec = ec;
+                    connect_completed = true;
+                });
 
         // Асинхронное ожидание таймаута
         connect_timer.async_wait([&connect_completed, this](beast::error_code ec) {
@@ -128,7 +127,7 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
                 httpStream_->socket().shutdown(tcp::socket::shutdown_both, ec);
                 httpStream_.reset();
 
-                return handleRedirect(redirect_url, ctx.countRedirects - 1);
+                return handleRedirect(redirect_url, ctx.countRedirects - 1, ctx.config);
             }
         }
 
@@ -156,7 +155,7 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
 
 std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
     try {
-        httpsStream_ = std::make_unique<beast::ssl_stream<beast::tcp_stream>>(ioc_, sslCtx_);
+        httpsStream_ = std::make_unique<beast::ssl_stream<beast::tcp_stream> >(ioc_, sslCtx_);
 
         setupTimeouts(beast::get_lowest_layer(*httpsStream_), ctx);
 
@@ -180,10 +179,10 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
 
         // Асинхронный handshake
         httpsStream_->async_handshake(ssl::stream_base::client,
-            [&handshake_ec, &handshake_completed](beast::error_code ec) {
-                handshake_ec = ec;
-                handshake_completed = true;
-            });
+                [&handshake_ec, &handshake_completed](beast::error_code ec) {
+                    handshake_ec = ec;
+                    handshake_completed = true;
+                });
 
         // Асинхронное ожидание таймаута
         handshake_timer.async_wait([&handshake_completed, this](beast::error_code ec) {
@@ -242,7 +241,7 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
                 httpsStream_->shutdown(ec);
                 httpsStream_.reset();
 
-                return handleRedirect(redirect_url, ctx.countRedirects - 1);
+                return handleRedirect(redirect_url, ctx.countRedirects - 1, ctx.config);
             }
         }
 
@@ -268,10 +267,11 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
     }
 }
 
-std::string PageLoader::handleRedirect(const std::string &redirect_url, int countRedirects) {
+std::string PageLoader::handleRedirect(const std::string &redirect_url, int countRedirects,
+        const RequestConfig &sourceConfig) {
     RequestConfig config;
     try {
-        config = parseUrl(redirect_url);
+        config = parseUrl(redirect_url, sourceConfig);
     } catch (const std::exception &e) {
         throw std::runtime_error("Failed to parse redirect URL: " + std::string(e.what()));
     }

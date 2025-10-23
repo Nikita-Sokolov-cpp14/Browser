@@ -10,14 +10,15 @@
 * @param url Строка с исходным URL.
 * @return Параметры запроса HTML страницы.
 */
-RequestConfig parseUrl(const std::string &url);
+RequestConfig parseUrl(const std::string &url, const RequestConfig &sourceConfig);
 
 /**
 * @brief Извлеч все ссылки с HTML страницы.
 * @param htmlContent Строка с исходным URL.
 * @param links Контейнер для записи ссылок.
 */
-void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> &links);
+void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> &targetLinks,
+        const RequestConfig &sourceConfig);
 
 /**
 * @brief Преобразовать структуру с параметрами подключения в строку.

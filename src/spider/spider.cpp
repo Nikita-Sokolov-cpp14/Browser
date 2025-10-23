@@ -115,11 +115,11 @@ void Spider::processTask(const QueueParams &queueParams) {
         //     std::unique_lock<std::mutex> xmlLock(xmlMutex_);
         //     extractAllLinks(responseStr, configs);
         // }
-        std::vector<RequestConfig> configs;
-        extractAllLinks(responseStr, configs);
+        std::vector<RequestConfig> targetConfigs;
+        extractAllLinks(responseStr, targetConfigs, queueParams.requestConfig);
 
         // Добавляем новые задачи в очередь
-        for (auto &config : configs) {
+        for (auto &config : targetConfigs) {
             if (queueParams.recursiveCount < maxRecursiveCount_) {
                 addTask(QueueParams(config, queueParams.recursiveCount + 1));
             }
