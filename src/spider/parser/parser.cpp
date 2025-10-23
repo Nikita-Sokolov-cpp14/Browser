@@ -56,7 +56,7 @@ void Parser::clearPunctuation() {
     }
 
     for (size_t i = 0; i < text_.size(); ++i) {
-        if (ispunct(text_[i])) {
+        if (ispunct((unsigned char)text_[i])) {
             text_[i] = ' ';
         }
     }
