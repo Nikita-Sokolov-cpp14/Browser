@@ -11,41 +11,88 @@ namespace http = beast::http;
 namespace net = boost::asio;
 using tcp = net::ip::tcp;
 
+/**
+* @brief HTTP сессия.
+*/
 class HTTPSession : public std::enable_shared_from_this<HTTPSession> {
 public:
+    /**
+    * @brief Конструктор.
+    * @param socket Сокет.
+    * @param dbManager Указатель на класс менеджера БД.
+    */
     HTTPSession(tcp::socket socket, DatabaseManager *dbManager);
+
+    /**
+    * @brief Запустить сессию.
+    */
     void start();
 
 private:
-    void read_request();
-    void process_request();
-    void handle_get();
-    void handle_post();
-    void send_response(const std::string &content, http::status status = http::status::ok);
-    std::string parse_form_data(const std::string &body);
-    std::vector<std::string> parse_query(const std::string &query);
+    /**
+    * @brief Прочитать запрос.
+    */
+    void readRequest();
 
-    tcp::socket socket_;
-    beast::flat_buffer buffer_ {8192};
-    http::request<http::dynamic_body> request_;
-    http::response<http::dynamic_body> response_;
-    DatabaseManager *dbManager_;
+    /**
+    * @brief Обработать запрос.
+    */
+    void processRequest();
+
+    /**
+    * @brief Обработать GET запрос.
+    */
+    void handleGet();
+
+    /**
+    * @brief Обработать POST запрос.
+    */
+    void handlePost();
+
+    /**
+    * @brief Отправить ответ на запрос.
+    * @param content Строка с HTML кодом страницы-ответа.
+    * @param status Статус.
+    */
+    void sendResponse(const std::string &content, http::status status = http::status::ok);
+
+    /**
+    * @brief Получить слова для поиска из строки с запросом.
+    * @param body Строка с HTML кодом запроса.
+    * @return Строка со словами запроса.
+    */
+    std::string parseFormData(const std::string &body);
+
+    /**
+    * @brief Разить строку со словами на отдельные строки.
+    * @param query Строка со словами.
+    * @return Вектор из отдельных слов запроса.
+    */
+    std::vector<std::string> parseQuery(const std::string &query);
+
+    tcp::socket socket_; //!< Сокет.
+    beast::flat_buffer buffer_ {8192}; //!< Буффер.
+    http::request<http::dynamic_body> request_; //!< Запрос.
+    http::response<http::dynamic_body> response_; //!< Ответ.
+    DatabaseManager *dbManager_; //!< Объект взаимодействия с psql.
 };
 
+/**
+* @brief HTTP сервер.
+*/
 class HTTPServer {
 public:
     HTTPServer(net::io_context &ioc, const tcp::endpoint &endpoint, DatabaseManager *dbManager);
+
+    /**
+    * @brief Запустить сервер.
+    */
     void start();
 
 private:
-    void accept_connection();
+    void acceptConnection();
 
     net::io_context &ioc_;
     tcp::acceptor acceptor_;
     DatabaseManager *dbManager_;
 };
-
-// HTML templates
-// std::string create_search_page();
-// std::string create_results_page(const std::vector<SearchResult>& results, const std::string& query);
-// std::string create_error_page(const std::string& message);
