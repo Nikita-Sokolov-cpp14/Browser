@@ -114,3 +114,56 @@ void DatabaseManager::writeData(const std::string &pageTitle,
         std::cerr << "DatabaseManager::writeData: Ошибка: " << e.what() << std::endl;
     }
 }
+
+void DatabaseManager::searchWords(std::map<int, std::string> &results,
+        const std::vector<std::string> &words) {
+
+    std::map<std::string, int> titleRelevant;
+
+    for (int i = 0; i < words.size();++ i) {
+        std::vector<std::pair<std::string, int> > wordResults;
+        getPagesByWord(words[i], wordResults);
+        for (auto &val : wordResults) {
+            // std::cout << val.first << " " << val.second << std::endl;
+            titleRelevant[val.first] += val.second;
+        }
+    }
+
+    for (auto &val : titleRelevant) {
+        results[val.second] = val.first;
+    }
+
+    for (auto &val : results) {
+        std::cout << val.first << " " << val.second << std::endl;
+    }
+
+    std::cout << "DatabaseManager::searchWords: sucsess" << std::endl;
+}
+
+void DatabaseManager::getPagesByWord(const std::string &targetWord,
+        std::vector<std::pair<std::string, int> > &results) {
+    try {
+        pqxx::work txn(connection_);
+
+        std::string query = R"(
+            SELECT DISTINCT p.title, w.word_count
+            FROM pages p
+            JOIN page_words pw ON p.id = pw.page_id
+            JOIN words w ON pw.word_id = w.id_word
+            WHERE w.word = $1
+        )";
+
+        pqxx::result result = txn.exec_params(query, targetWord);
+
+        for (const auto &row : result) {
+            std::string word = row[0].as<std::string>();
+            int count = row[1].as<int>();
+            results.push_back(std::make_pair(word, count));
+        }
+
+        txn.commit();
+
+    } catch (const std::exception &e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+}

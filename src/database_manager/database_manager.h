@@ -32,11 +32,16 @@ public:
     void clearDatabase();
 
     /**
-    * @brief Деструктор.
+    * @brief
     */
     void writeData(const std::string &pageTitle, const std::map<std::string, int> &storage);
+
+    void searchWords(std::map<int, std::string> &results, const std::vector<std::string> &words);
 
 private:
     //! Объект подключения к БД PostgreSql
     pqxx::connection connection_;
+
+    void getPagesByWord(const std::string &targetWord,
+            std::vector<std::pair<std::string, int> > &results);
 };

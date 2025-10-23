@@ -79,10 +79,13 @@ void HTTPSession::handle_post() {
             return;
         }
 
-        // Perform search
+        // Perform search;
         // auto results = db_.search(words);
         // std::string html = create_results_page(results, query);
         // send_response(html);
+        std::map<int, std::string> results;
+        dbManager_->searchWords(results, words);
+
 
         std::string test_html = R"(
             <!DOCTYPE html>
