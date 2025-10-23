@@ -29,7 +29,6 @@ void Spider::setDbManager(DatabaseManager *dbManager) {
 }
 
 void Spider::setThreadCount(size_t count) {
-    // Остановить старые потоки если есть
     {
         std::unique_lock<std::mutex> lock(queueMutex_);
         stop_ = true;
@@ -44,7 +43,6 @@ void Spider::setThreadCount(size_t count) {
 
     workers_.clear();
 
-    // Запустить новые потоки
     stop_ = false;
     for (size_t i = 0; i < count; ++i) {
         workers_.emplace_back(&Spider::workerThread, this);
@@ -64,15 +62,12 @@ void Spider::workerThread() {
         {
             std::unique_lock<std::mutex> lock(queueMutex_);
 
-            // Ожидание либо новых задач, либо сигнала остановки
             condition_.wait(lock, [this]() { return stop_ || !tasksQueue_.empty(); });
 
-            // Если остановка и очередь пуста - выходим
             if (stop_ && tasksQueue_.empty()) {
                 return;
             }
 
-            // Если есть задачи - берем следующую
             if (!tasksQueue_.empty()) {
                 task = std::move(tasksQueue_.front());
                 tasksQueue_.pop();
@@ -82,7 +77,6 @@ void Spider::workerThread() {
             }
         }
 
-        // Обрабатываем задачу
         processTask(task);
         activeTasks_--;
 
@@ -94,10 +88,10 @@ void Spider::workerThread() {
 
 void Spider::processTask(const QueueParams &queueParams) {
     try {
-        std::cout << "Spider::processTask: start task: "
-                  << "host: " << queueParams.requestConfig.host
-                  << " port: " << queueParams.requestConfig.port
-                  << " target: " << queueParams.requestConfig.target << std::endl;
+        // std::cout << "Spider::processTask: start task: "
+        //           << "host: " << queueParams.requestConfig.host
+        //           << " port: " << queueParams.requestConfig.port
+        //           << " target: " << queueParams.requestConfig.target << std::endl;
 
         auto client = std::make_unique<PageLoader>();
         std::string responseStr = client->get(queueParams.requestConfig);
@@ -109,7 +103,6 @@ void Spider::processTask(const QueueParams &queueParams) {
             indexer->saveDataToDb(*dbmanager_, queueParams.requestConfig);
         }
 
-        // Извлекаем ссылки
         // std::vector<RequestConfig> configs;
         // {
         //     std::unique_lock<std::mutex> xmlLock(xmlMutex_);
@@ -118,7 +111,6 @@ void Spider::processTask(const QueueParams &queueParams) {
         std::vector<RequestConfig> targetConfigs;
         extractAllLinks(responseStr, targetConfigs, queueParams.requestConfig);
 
-        // Добавляем новые задачи в очередь
         for (auto &config : targetConfigs) {
             if (queueParams.recursiveCount < maxRecursiveCount_) {
                 addTask(QueueParams(config, queueParams.recursiveCount + 1));
@@ -133,7 +125,6 @@ void Spider::start(const RequestConfig &startRequestConfig, int recursiveCount) 
     maxRecursiveCount_ = recursiveCount;
     addTask(QueueParams(startRequestConfig, 1));
 
-    // Эффективное ожидание вместо sleep
     std::unique_lock<std::mutex> lock(queueMutex_);
     condition_.wait(lock, [this]() { return tasksQueue_.empty() && activeTasks_ == 0; });
 

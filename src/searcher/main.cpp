@@ -78,11 +78,7 @@ int main() {
 
         std::cout << "Starting Search Engine Server..." << std::endl;
 
-        // Создаем соединение с базой данных
-        // Database db(db_connection);
-        // std::cout << "Database connection initialized" << std::endl;
 
-        // Создаем IO context
         net::io_context ioc {thread_count};
 
         // Создаем endpoint для прослушивания
@@ -91,7 +87,6 @@ int main() {
 
         // Создаем и запускаем HTTP сервер
         HTTPServer server(ioc, endpoint, &dbmanager);
-        // HTTPServer server(ioc, endpoint, db);
         server.start();
 
         std::cout << "Server running on http://localhost:" << startConfig.port << std::endl;

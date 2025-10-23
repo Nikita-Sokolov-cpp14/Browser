@@ -25,4 +25,4 @@ void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> 
 * @param requestConfig Структура с параметрами подключения.
 * @return Строка с параметрами подключения.
 */
-std::string convertRequestConfigToTitleString(const RequestConfig &requestConfig);
+// std::string convertRequestConfigToTitleString(const RequestConfig &requestConfig);

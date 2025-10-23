@@ -46,7 +46,6 @@ namespace {
 RequestConfig parseRelativeLinks(const std::string &url, const RequestConfig &sourceConfig) {
     RequestConfig config = sourceConfig;
 
-    // Если URL начинается с ./, просто убираем этот префикс
     if (url.substr(0, 2) == "./") {
         config.target = url.substr(2);
         return config;
@@ -56,9 +55,7 @@ RequestConfig parseRelativeLinks(const std::string &url, const RequestConfig &so
     const size_t endPath = path.find('?');
     std::string sourcePath = endPath != std::string::npos ? path.substr(0, endPath) : path;
 
-    // Обработка случаев с ../
     if (url.find("..") != std::string::npos) {
-        // Подсчитываем количество ../ в начале URL
         size_t pos = 0;
         int parentCount = 0;
         while (pos + 2 < url.size() && url.substr(pos, 3) == "../") {
@@ -66,19 +63,16 @@ RequestConfig parseRelativeLinks(const std::string &url, const RequestConfig &so
             pos += 3;
         }
 
-        // Удаляем соответствующее количество сегментов из sourcePath
         std::string currentPath = sourcePath;
         for (int i = 0; i < parentCount; i++) {
             size_t lastSlash = currentPath.find_last_of('/');
             if (lastSlash == std::string::npos || lastSlash == 0) {
-                // Достигли корня
                 currentPath = "/";
                 break;
             }
             currentPath = currentPath.substr(0, lastSlash);
         }
 
-        // Добавляем оставшуюся часть URL
         std::string remainingUrl = url.substr(pos);
         if (!remainingUrl.empty() && remainingUrl[0] != '/') {
             config.target = currentPath + "/" + remainingUrl;
@@ -89,8 +83,6 @@ RequestConfig parseRelativeLinks(const std::string &url, const RequestConfig &so
         return config;
     }
 
-    // Простой случай - относительный путь без ../
-    // Берем исходный путь как есть (без обрезки последнего сегмента)
     if (sourcePath == "/") {
         sourcePath = "";
     }
@@ -103,16 +95,14 @@ RequestConfig parseRelativeLinks(const std::string &url, const RequestConfig &so
 RequestConfig parseUrl(const std::string &url, const RequestConfig &sourceConfig) {
     RequestConfig config;
 
-    // Если ссылка пустая, возвращаем пустую структуру
     if (url.empty()) {
         std::cerr << "parseUrl: url is empty" << std::endl;
         return config;
     }
 
-    // Находим позицию начала хоста (после ://)
     size_t scheme_end = url.find("://");
     if (scheme_end == std::string::npos) {
-        std::cerr << "parseUrl: parse relative links: " << url << std::endl;
+        // std::cerr << "parseUrl: parse relative links: " << url << std::endl;
         if (url[0] == '#') {
             std::cerr << "parseUrl: url is fragment: " << std::endl;
             return RequestConfig();
@@ -122,20 +112,17 @@ RequestConfig parseUrl(const std::string &url, const RequestConfig &sourceConfig
     }
 
     std::string scheme = url.substr(0, scheme_end);
-    size_t host_start = scheme_end + 3; // пропускаем "://"
+    size_t host_start = scheme_end + 3;
 
-    // Находим конец хоста (до порта или пути)
     size_t host_end = url.find('/', host_start);
 
     std::string hostPort;
     if (host_end == std::string::npos) {
-        // Нет пути - весь остаток URL это host:port
         hostPort = url.substr(host_start);
     } else {
         hostPort = url.substr(host_start, host_end - host_start);
     }
 
-    // Обрабатываем host:port
     size_t portStart = hostPort.find(':');
     bool portIsExist = (portStart != std::string::npos);
 
@@ -146,14 +133,12 @@ RequestConfig parseUrl(const std::string &url, const RequestConfig &sourceConfig
         config.port = hostPort.substr(portStart + 1);
     }
 
-    // Устанавливаем путь
     if (host_end != std::string::npos) {
         config.target = url.substr(host_end);
     } else {
-        config.target = "/"; // путь по умолчанию
+        config.target = "/";
     }
 
-    // Устанавливаем порт по умолчанию если не найден
     if (!portIsExist) {
         if (scheme == "https") {
             config.port = "443";
@@ -162,10 +147,9 @@ RequestConfig parseUrl(const std::string &url, const RequestConfig &sourceConfig
         }
     }
 
-    // Валидация результата
     if (config.host.empty()) {
         std::cerr << "parseUrl: empty host in URL: " << url << std::endl;
-        return RequestConfig {}; // возвращаем пустой объект
+        return RequestConfig {};
     }
 
     return config;
@@ -188,7 +172,6 @@ void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> 
         return;
     }
 
-    // Более специфичный XPath для тегов <a>
     xmlXPathObjectPtr xpathObj = xmlXPathEvalExpression(BAD_CAST "//a/@href", xpathCtx);
 
     if (xpathObj == nullptr || xpathObj->nodesetval == nullptr) {
@@ -223,10 +206,10 @@ void extractAllLinks(const std::string &htmlContent, std::vector<RequestConfig> 
     xmlFreeDoc(doc);
 }
 
-std::string convertRequestConfigToTitleString(const RequestConfig &requestConfig) {
-    std::string titleString = "host:" + requestConfig.host + " ";
-    titleString += "port:" + requestConfig.port + " ";
-    titleString += "target:" + requestConfig.target;
+// std::string convertRequestConfigToTitleString(const RequestConfig &requestConfig) {
+//     std::string titleString = "host:" + requestConfig.host + " ";
+//     titleString += "port:" + requestConfig.port + " ";
+//     titleString += "target:" + requestConfig.target;
 
-    return titleString;
-}
+//     return titleString;
+// }

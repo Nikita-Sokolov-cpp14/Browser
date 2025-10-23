@@ -37,7 +37,6 @@ void DatabaseManager::createTables() {
     try {
         pqxx::work txn(connection_);
 
-        // Создание таблицы pages
         txn.exec(R"(
             CREATE TABLE IF NOT EXISTS pages (
                 id SERIAL PRIMARY KEY,
@@ -48,7 +47,6 @@ void DatabaseManager::createTables() {
         )");
         std::cout << "DatabaseManager::createTables: Table 'pages' created" << std::endl;
 
-        // Создание таблицы words
         txn.exec(R"(
             CREATE TABLE IF NOT EXISTS words (
                 id_word SERIAL PRIMARY KEY,
@@ -58,7 +56,6 @@ void DatabaseManager::createTables() {
         )");
         std::cout << "DatabaseManager::createTables: Table 'words' created" << std::endl;
 
-        // Создание связующей таблицы page_words
         txn.exec(R"(
             CREATE TABLE IF NOT EXISTS page_words (
                 id SERIAL PRIMARY KEY,
@@ -72,7 +69,6 @@ void DatabaseManager::createTables() {
         )");
         std::cout << "DatabaseManager::createTables: Table 'page_words' created" << std::endl;
 
-        // Коммитим транзакцию
         txn.commit();
         std::cout << "DatabaseManager::createTables: All tables created" << std::endl;
 
@@ -99,7 +95,6 @@ void DatabaseManager::writeData(const RequestConfig &requestConfig,
     try {
         pqxx::work txn(connection_);
 
-        // Добавляем страницу и получаем её ID
         pqxx::result page_result =
             txn.exec_params(
                 "INSERT INTO pages (host, port, target) VALUES ($1, $2, $3) RETURNING id",
