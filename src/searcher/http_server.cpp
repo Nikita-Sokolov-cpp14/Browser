@@ -79,32 +79,32 @@ void HTTPSession::handle_post() {
             return;
         }
 
-        // Perform search;
-        // auto results = db_.search(words);
-        // std::string html = create_results_page(results, query);
-        // send_response(html);
-        std::map<int, std::string> results;
+        std::map<int, std::string, std::greater<int>> results;
         dbManager_->searchWords(results, words);
+        for (auto &val : results) {
+            std::cout << val.first << " " << val.second << std::endl;
+        }
 
+        // std::string test_html = R"(
+        //     <!DOCTYPE html>
+        //     <html>
+        //     <head><title>Search Results</title></head>
+        //     <body>
+        //         <h1>Search Results</h1>
+        //         <p>Query: )" + query + R"(</p>
+        //         <p>Search functionality not implemented yet</p>
+        //         <a href="/">New search</a>
+        //     </body>
+        //     </html>
+        // )";
 
-        std::string test_html = R"(
-            <!DOCTYPE html>
-            <html>
-            <head><title>Search Results</title></head>
-            <body>
-                <h1>Search Results</h1>
-                <p>Query: )" + query + R"(</p>
-                <p>Search functionality not implemented yet</p>
-                <a href="/">New search</a>
-            </body>
-            </html>
-        )";
-        send_response(test_html);
+        std::string html = create_results_page(results, query);
+        send_response(html);
 
     } catch (const std::exception &e) {
-                std::cerr << "Error processing POST request: " << e.what() << std::endl;
-                // send_response(create_error_page("Internal server error"),
-                //         http::status::internal_server_error);
+        std::cerr << "Error processing POST request: " << e.what() << std::endl;
+        // send_response(create_error_page("Internal server error"),
+        //         http::status::internal_server_error);
     }
 }
 
@@ -140,21 +140,21 @@ void HTTPSession::send_response(const std::string &content, http::status status)
 std::string HTTPSession::parse_form_data(const std::string &body) {
     // Simple form parsing for "query=search+terms"
     if (body.find("query=") == 0) {
-                std::string encoded_query = body.substr(6); // Remove "query="
+        std::string encoded_query = body.substr(6); // Remove "query="
 
-                // Basic URL decoding
-                std::string decoded;
-                for (size_t i = 0; i < encoded_query.size(); ++i) {
-                    if (encoded_query[i] == '+') {
-                        decoded += ' ';
-                    } else if (encoded_query[i] == '%' && i + 2 < encoded_query.size()) {
-                        // Skip % decoding for simplicity
-                        decoded += encoded_query[i];
-                    } else {
-                        decoded += encoded_query[i];
-                    }
-                }
-                return decoded;
+        // Basic URL decoding
+        std::string decoded;
+        for (size_t i = 0; i < encoded_query.size(); ++i) {
+            if (encoded_query[i] == '+') {
+                decoded += ' ';
+            } else if (encoded_query[i] == '%' && i + 2 < encoded_query.size()) {
+                // Skip % decoding for simplicity
+                decoded += encoded_query[i];
+            } else {
+                decoded += encoded_query[i];
+            }
+        }
+        return decoded;
     }
     return "";
 }
@@ -165,17 +165,16 @@ std::vector<std::string> HTTPSession::parse_query(const std::string &query) {
     std::string word;
 
     while (ss >> word) {
-                // Remove punctuation (basic)
-                word.erase(std::remove_if(word.begin(), word.end(),
-                                   [](char c) { return std::ispunct(c); }),
-                        word.end());
+        // Remove punctuation (basic)
+        word.erase(std::remove_if(word.begin(), word.end(), [](char c) { return std::ispunct(c); }),
+                word.end());
 
-                // Convert to lowercase
-                std::transform(word.begin(), word.end(), word.begin(), ::tolower);
+        // Convert to lowercase
+        std::transform(word.begin(), word.end(), word.begin(), ::tolower);
 
-                if (!word.empty()) {
-                    words.push_back(word);
-                }
+        if (!word.empty()) {
+            words.push_back(word);
+        }
     }
 
     return words;
@@ -191,25 +190,25 @@ dbManager_(dbManager) {
     // Open the acceptor
     acceptor_.open(endpoint.protocol(), ec);
     if (ec) {
-                throw std::runtime_error("Failed to open acceptor: " + ec.message());
+        throw std::runtime_error("Failed to open acceptor: " + ec.message());
     }
 
     // Allow address reuse
     acceptor_.set_option(net::socket_base::reuse_address(true), ec);
     if (ec) {
-                throw std::runtime_error("Failed to set reuse address: " + ec.message());
+        throw std::runtime_error("Failed to set reuse address: " + ec.message());
     }
 
     // Bind to the server address
     acceptor_.bind(endpoint, ec);
     if (ec) {
-                throw std::runtime_error("Failed to bind: " + ec.message());
+        throw std::runtime_error("Failed to bind: " + ec.message());
     }
 
     // Start listening for connections
     acceptor_.listen(net::socket_base::max_listen_connections, ec);
     if (ec) {
-                throw std::runtime_error("Failed to listen: " + ec.message());
+        throw std::runtime_error("Failed to listen: " + ec.message());
     }
 }
 

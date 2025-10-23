@@ -115,7 +115,7 @@ void DatabaseManager::writeData(const std::string &pageTitle,
     }
 }
 
-void DatabaseManager::searchWords(std::map<int, std::string> &results,
+void DatabaseManager::searchWords(std::map<int, std::string, std::greater<int>> &results,
         const std::vector<std::string> &words) {
 
     std::map<std::string, int> titleRelevant;
@@ -131,10 +131,6 @@ void DatabaseManager::searchWords(std::map<int, std::string> &results,
 
     for (auto &val : titleRelevant) {
         results[val.second] = val.first;
-    }
-
-    for (auto &val : results) {
-        std::cout << val.first << " " << val.second << std::endl;
     }
 
     std::cout << "DatabaseManager::searchWords: sucsess" << std::endl;

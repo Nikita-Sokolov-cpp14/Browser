@@ -36,7 +36,8 @@ public:
     */
     void writeData(const std::string &pageTitle, const std::map<std::string, int> &storage);
 
-    void searchWords(std::map<int, std::string> &results, const std::vector<std::string> &words);
+    void searchWords(std::map<int, std::string, std::greater<int>> &results,
+            const std::vector<std::string> &words);
 
 private:
     //! Объект подключения к БД PostgreSql
