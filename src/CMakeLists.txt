@@ -4,6 +4,7 @@ project(browser)
 add_subdirectory(utils)
 add_subdirectory(database_manager)
 add_subdirectory(spider)
+add_subdirectory(searcher)
 
 add_executable(${PROJECT_NAME} main.cpp)
 

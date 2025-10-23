@@ -3,7 +3,7 @@ project(searcher)
 
 find_package(Boost REQUIRED COMPONENTS system)
 
-add_subdirectory(../database_manager ${CMAKE_BINARY_DIR}/database_manager)
+# add_subdirectory(../database_manager ${CMAKE_BINARY_DIR}/database_manager)
 
 add_executable(searcher
     main.cpp
