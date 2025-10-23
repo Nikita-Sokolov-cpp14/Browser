@@ -101,15 +101,12 @@ void Spider::processTask(const QueueParams &queueParams) {
 
         auto client = std::make_unique<PageLoader>();
         std::string responseStr = client->get(queueParams.requestConfig);
-
-        std::cout << "processTask: get responseStr" << std::endl;
         auto indexer = std::make_unique<Indexer>();
         indexer->setPage(responseStr);
 
         {
             std::unique_lock<std::mutex> dbLock(dbMutex_);
             indexer->saveDataToDb(*dbmanager_, queueParams.requestConfig);
-            std::cout << "processTask: stop saveDataToDb" << std::endl;
         }
 
         // Извлекаем ссылки
