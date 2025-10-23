@@ -125,8 +125,10 @@ void DatabaseManager::writeData(const RequestConfig &requestConfig,
         }
 
         txn.commit();
-        std::cout << "DatabaseManager::writeData: Все данные для страницы '" <<
-            requestConfig.port << requestConfig.target << "' успешно добавлены!"
+        std::cout << "DatabaseManager::writeData: Все данные для страницы " <<
+            requestConfig.host << ": " <<
+            requestConfig.port << " " <<
+            requestConfig.target << " успешно добавлены!"
                   << std::endl;
 
         txn.commit();

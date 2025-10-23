@@ -104,7 +104,7 @@ RequestConfig parseUrl(const std::string &url, const RequestConfig &sourceConfig
     if (scheme_end == std::string::npos) {
         // std::cerr << "parseUrl: parse relative links: " << url << std::endl;
         if (url[0] == '#') {
-            std::cerr << "parseUrl: url is fragment: " << std::endl;
+            // std::cerr << "parseUrl: url is fragment: " << url << std::endl;
             return RequestConfig();
         }
 

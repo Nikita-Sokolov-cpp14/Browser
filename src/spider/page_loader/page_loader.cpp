@@ -87,8 +87,8 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
             throw beast::system_error(connect_ec);
         }
 
-        std::cout << "HTTP connect completed successfully" << std::endl;
-        std::cout << "performHttpRequest connect" << std::endl;
+        // std::cout << "HTTP connect completed successfully" << std::endl;
+        // std::cout << "performHttpRequest connect" << std::endl;
 
         setupTimeouts(*httpStream_, ctx);
 
@@ -105,14 +105,14 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
         http::read(*httpStream_, buffer, res);
 
         std::string response = beast::buffers_to_string(res.body().data());
-        std::cout << "Received HTTP response for " << ctx.config.host << " " << ctx.config.port
-                  << " " << ctx.config.target << " " << res.result() << std::endl;
+        // std::cout << "Received HTTP response for " << ctx.config.host << " " << ctx.config.port
+        //           << " " << ctx.config.target << " " << res.result() << std::endl;
 
         if (isRedirect(res.result())) {
             auto location = res.find(http::field::location);
             if (location != res.end()) {
                 std::string redirect_url = location->value().to_string();
-                std::cout << "Redirecting to: " << redirect_url << std::endl;
+                // std::cout << "Redirecting to: " << redirect_url << std::endl;
 
                 beast::error_code ec;
                 httpStream_->socket().shutdown(tcp::socket::shutdown_both, ec);
@@ -193,8 +193,8 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
             throw beast::system_error(handshake_ec);
         }
 
-        std::cout << "SSL handshake completed successfully" << std::endl;
-        std::cout << "performHttpsRequest" << std::endl;
+        // std::cout << "SSL handshake completed successfully" << std::endl;
+        // std::cout << "performHttpsRequest" << std::endl;
 
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
         req.set(http::field::host, ctx.config.host);
@@ -210,14 +210,14 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
         http::read(*httpsStream_, buffer, res);
 
         std::string response = beast::buffers_to_string(res.body().data());
-        std::cout << "Received HTTP response for " << ctx.config.host << " " << ctx.config.port
-                  << " " << ctx.config.target << " " << res.result() << std::endl;
+        // std::cout << "Received HTTP response for " << ctx.config.host << " " << ctx.config.port
+        //           << " " << ctx.config.target << " " << res.result() << std::endl;
 
         if (isRedirect(res.result())) {
             auto location = res.find(http::field::location);
             if (location != res.end()) {
                 std::string redirect_url = location->value().to_string();
-                std::cout << "Redirecting to: " << redirect_url << std::endl;
+                // std::cout << "Redirecting to: " << redirect_url << std::endl;
 
                 beast::error_code ec;
                 httpsStream_->shutdown(ec);
