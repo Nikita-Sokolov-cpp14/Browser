@@ -48,7 +48,7 @@ private:
     struct RequestContext {
         const RequestConfig &config; //!< Параметры запроса.
         int countRedirects; //!< Число редиректов.
-        std::chrono::seconds timeout {10}; //!< Таймаут (по умолчанию 10 секунд).
+        std::chrono::seconds timeout {4}; //!< Таймаут (по умолчанию 4 секунды).
     };
 
     /**

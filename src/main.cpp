@@ -113,6 +113,7 @@ int main(int argc, char **argv) {
     Spider spider;
     try {
         DatabaseManager dbmanager(startConfig.dbConnectionString);
+        dbmanager.createTables();
 
         RequestConfig reqConfig;
         reqConfig.host = startConfig.startPageParams.host;

@@ -23,7 +23,9 @@ void DatabaseManager::createTables() {
         txn.exec(R"(
             CREATE TABLE IF NOT EXISTS pages (
                 id SERIAL PRIMARY KEY,
-                title VARCHAR(255) NOT NULL
+                host VARCHAR(127) NOT NULL,
+                port VARCHAR(31) NOT NULL,
+                target VARCHAR(255) NOT NULL
             )
         )");
         std::cout << "DatabaseManager::createTables: Table 'pages' created" << std::endl;
@@ -74,14 +76,19 @@ void DatabaseManager::clearDatabase() {
     }
 }
 
-void DatabaseManager::writeData(const std::string &pageTitle,
+void DatabaseManager::writeData(const RequestConfig &requestConfig,
         const std::map<std::string, int> &storage) {
     try {
         pqxx::work txn(connection_);
 
         // Добавляем страницу и получаем её ID
         pqxx::result page_result =
-                txn.exec_params("INSERT INTO pages (title) VALUES ($1) RETURNING id", pageTitle);
+            txn.exec_params(
+                "INSERT INTO pages (host, port, target) VALUES ($1, $2, $3) RETURNING id",
+                requestConfig.host,
+                requestConfig.port,
+                requestConfig.target
+        );
         int page_id = page_result[0][0].as<int>();
 
         for (auto &val : storage) {
@@ -105,7 +112,8 @@ void DatabaseManager::writeData(const std::string &pageTitle,
         }
 
         txn.commit();
-        std::cout << "DatabaseManager::writeData: Все данные для страницы '" << pageTitle << "' успешно добавлены!"
+        std::cout << "DatabaseManager::writeData: Все данные для страницы '" <<
+            requestConfig.port << requestConfig.target << "' успешно добавлены!"
                   << std::endl;
 
         txn.commit();

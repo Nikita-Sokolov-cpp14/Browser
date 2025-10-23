@@ -7,12 +7,6 @@
 
 namespace {
 
-/**
-* @brief Вектор с заблокированными страницами
-* @details При попадании на данные страницы задача виснет в функции handshake.
-*/
-std::vector<std::string> blackList {"play.google.com", "news.google.com", "www.youtube.com"};
-
 } // namespace
 
 PageLoader::PageLoader() :
@@ -58,9 +52,55 @@ std::string PageLoader::performRequest(const RequestContext &ctx) {
 std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
     try {
         httpStream_ = std::make_unique<beast::tcp_stream>(ioc_);
-        setupTimeouts(*httpStream_, ctx);
+
+        // Асинхронный connect с таймаутом
+        beast::error_code connect_ec;
+        bool connect_completed = false;
+
         auto const results = resolver_.resolve(ctx.config.host, ctx.config.port);
-        httpStream_->connect(results);
+
+        // Таймер для connect
+        net::steady_timer connect_timer(ioc_);
+        connect_timer.expires_after(ctx.timeout);
+
+        // Асинхронный connect
+        httpStream_->async_connect(results,
+            [&connect_ec, &connect_completed](beast::error_code ec, tcp::resolver::results_type::endpoint_type) {
+                connect_ec = ec;
+                connect_completed = true;
+            });
+
+        // Асинхронное ожидание таймаута
+        connect_timer.async_wait([&connect_completed, this](beast::error_code ec) {
+            if (!ec && !connect_completed) {
+                // Таймаут сработал до завершения connect
+                std::cout << "HTTP connect timeout, cancelling..." << std::endl;
+                httpStream_->cancel();
+            }
+        });
+
+        // Запускаем io_context до завершения connect или таймаута
+        ioc_.restart();
+        while (ioc_.run_one()) {
+            if (connect_completed) {
+                connect_timer.cancel();
+                break;
+            }
+        }
+
+        // Проверяем результат connect
+        if (connect_ec) {
+            if (connect_ec == net::error::operation_aborted) {
+                throw std::runtime_error("HTTP connect timeout for " + ctx.config.host);
+            }
+            throw beast::system_error(connect_ec);
+        }
+
+        std::cout << "HTTP connect completed successfully" << std::endl;
+        std::cout << "performHttpRequest connect" << std::endl;
+
+        // Устанавливаем таймаут для последующих операций
+        setupTimeouts(*httpStream_, ctx);
 
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
         req.set(http::field::host, ctx.config.host);
@@ -115,16 +155,8 @@ std::string PageLoader::performHttpRequest(const RequestContext &ctx) {
 }
 
 std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
-    for (int i = 0; i < blackList.size(); ++i) {
-        if (blackList[i] == ctx.config.host) {
-            std::cout << "PageLoader::performHttpsRequest: page " << ctx.config.host
-                      << " in black list" << std::endl;
-            return "";
-        }
-    }
-
     try {
-        httpsStream_ = std::make_unique<beast::ssl_stream<beast::tcp_stream> >(ioc_, sslCtx_);
+        httpsStream_ = std::make_unique<beast::ssl_stream<beast::tcp_stream>>(ioc_, sslCtx_);
 
         setupTimeouts(beast::get_lowest_layer(*httpsStream_), ctx);
 
@@ -137,7 +169,52 @@ std::string PageLoader::performHttpsRequest(const RequestContext &ctx) {
 
         auto const results = resolver_.resolve(ctx.config.host, ctx.config.port);
         beast::get_lowest_layer(*httpsStream_).connect(results);
-        httpsStream_->handshake(ssl::stream_base::client);
+
+        // Асинхронный handshake с таймаутом
+        beast::error_code handshake_ec;
+        bool handshake_completed = false;
+
+        // Таймер для handshake
+        net::steady_timer handshake_timer(ioc_);
+        handshake_timer.expires_after(ctx.timeout);
+
+        // Асинхронный handshake
+        httpsStream_->async_handshake(ssl::stream_base::client,
+            [&handshake_ec, &handshake_completed](beast::error_code ec) {
+                handshake_ec = ec;
+                handshake_completed = true;
+            });
+
+        // Асинхронное ожидание таймаута
+        handshake_timer.async_wait([&handshake_completed, this](beast::error_code ec) {
+            if (!ec && !handshake_completed) {
+                // Таймаут сработал до завершения handshake
+                std::cout << "SSL handshake timeout, cancelling..." << std::endl;
+                beast::get_lowest_layer(*httpsStream_).cancel();
+            }
+        });
+
+        // Запускаем io_context до завершения handshake или таймаута
+        ioc_.restart();
+        while (ioc_.run_one()) {
+            if (handshake_completed) {
+                handshake_timer.cancel();
+                break;
+            }
+        }
+
+        // Проверяем результат handshake
+        if (handshake_ec) {
+            if (handshake_ec == net::error::operation_aborted) {
+                throw std::runtime_error("SSL handshake timeout for " + ctx.config.host);
+            }
+            throw beast::system_error(handshake_ec);
+        }
+
+        std::cout << "SSL handshake completed successfully" << std::endl;
+        std::cout << "performHttpsRequest" << std::endl;
+
+        // Остальной код остается без изменений
         http::request<http::string_body> req {http::verb::get, ctx.config.target, 11};
         req.set(http::field::host, ctx.config.host);
         req.set(http::field::user_agent, "Mozilla/5.0 (compatible; PageLoader)");

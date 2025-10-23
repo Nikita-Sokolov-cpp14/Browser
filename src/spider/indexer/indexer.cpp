@@ -16,8 +16,7 @@ void Indexer::setPage(const std::string &htmlPage) {
 }
 
 void Indexer::saveDataToDb(DatabaseManager &dbManager, const RequestConfig &requestConfig) {
-    std::string pageTItle = convertRequestConfigToTitleString(requestConfig);
-    dbManager.writeData(pageTItle, storage_);
+    dbManager.writeData(requestConfig, storage_);
 }
 
 std::string Indexer::getText() {

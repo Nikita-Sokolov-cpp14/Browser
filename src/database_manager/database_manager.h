@@ -5,6 +5,8 @@
 #include <iostream>
 #include <map>
 
+#include "../common_data.h"
+
 /**
 * @brief Класс взаимодействия с БД PostgeSql.
 */
@@ -34,7 +36,7 @@ public:
     /**
     * @brief
     */
-    void writeData(const std::string &pageTitle, const std::map<std::string, int> &storage);
+    void writeData(const RequestConfig &requestConfig, const std::map<std::string, int> &storage);
 
     void searchWords(std::map<int, std::string, std::greater<int>> &results,
             const std::vector<std::string> &words);
